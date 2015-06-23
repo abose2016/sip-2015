@@ -82,12 +82,13 @@ void TwoPlotsModified()
     TCanvas *c1 = new TCanvas("c1","My Awesome Test Graph!!",200,10,700,500);
     gr->Draw("apz");
 
-	TSpline3 *s3 = new TSpline3("Gr", gr);
-	interpolX = s3->Eval(x);
+	//TSpline3 *s3 = new TSpline3("Gr", gr);
+	//interpolX = s3->Eval(x);
 
-    // Draw a function on top
-   // TF1 * jFun= new TF1("new function","10+100*sin(x)/x", 0.0,20.0);
-  //  jFun-> Draw("SAME");
+    //Draw a function on top
+   TF1 * jFun= new TF1("new function", "sin(x)", 0.0,20.0);
+   jFun-> Draw("SAME");
+   gr-> Fit("sin(x)");
 
     c1->Update();
 }
