@@ -16,7 +16,7 @@ void FillRandVectors(vector< double > &xVector,
 {
     //Call TRandom3
 
-    int seed = 98;
+    int seed = 546563;
     TRandom3 *jrand = new TRandom3(seed);
     for(int i =0; i<n; i=i+1)
     {
@@ -67,7 +67,6 @@ void TwoPlots()
     // making vectors
     vector <double> xVector, yVector, xErrorVector,
            yErrorVector;
-
     const int n = 10;
 
     // filling vectors with random numbers
@@ -76,17 +75,18 @@ void TwoPlots()
     // making graph
     TGraphErrors *gr = LoadGraphFromVectors(xVector, yVector, xErrorVector,
                                             yErrorVector);
-
+   
     //Plot
     TCanvas *c1 = new TCanvas("c1","My Awesome Test Graph!!",200,10,700,500);
     gr->Draw("apz");
 
-	TSpline3 *s3 = new TSpline3("Gr", gr);
-	interpolX = s3->Eval(x);
-
     // Draw a function on top
-   // TF1 * jFun= new TF1("new function","10+100*sin(x)/x", 0.0,20.0);
-  //  jFun-> Draw("SAME");
+    TF1 * jFun= new TF1("new function","10+100*sin(x)/x", 0.0,20.0);
+    jFun-> Draw("SAME");
 
     c1->Update();
 }
+
+
+
+

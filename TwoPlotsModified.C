@@ -1,3 +1,4 @@
+#include "TCanvas.h"
 #include "TFrame.h"
 #include "TGraphErrors.h"
 #include "TRandom3.h"
@@ -5,19 +6,17 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
-#include "TSpline.h"
 
 using namespace std;
 
 //put random numbers into some vectors
 void FillRandVectors(vector< double > &xVector,
                      vector< double > &yVector,
-                     vector< double > &xErrorVector, 	 			     
-					 vector< double > &yErrorVector, int n)
+                     vector< double > &xErrorVector, 	 			     vector< double > &yErrorVector, int n)
 {
     //Call TRandom3
 
-    int seed = 65675;
+    int seed = 98;
     TRandom3 *jrand = new TRandom3(seed);
     for(int i =0; i<n; i=i+1)
     {
@@ -62,10 +61,13 @@ TGraphErrors *LoadGraphFromVectors(std::vector< double > xVector, std::vector< d
 }
 
 //Main of the program
-void randSpline()
+void TwoPlots()
 {
+
     // making vectors
-    vector <double> xVector, yVector, xErrorVector, yErrorVector;
+    vector <double> xVector, yVector, xErrorVector,
+           yErrorVector;
+
     const int n = 10;
 
     // filling vectors with random numbers
@@ -74,17 +76,17 @@ void randSpline()
     // making graph
     TGraphErrors *gr = LoadGraphFromVectors(xVector, yVector, xErrorVector,
                                             yErrorVector);
-   
+
     //Plot
     TCanvas *c1 = new TCanvas("c1","My Awesome Test Graph!!",200,10,700,500);
     gr->Draw("apz");
 
-   
-// Section 3. Draw the Cubic Spline to the same canvas
-   TSpline3 *sp = new TSpline3("Cubic Spline",gr,"b2e2", 0, 0);
-   
-   sp->SetLineColor(kRed);
-   sp->Draw("lsame");
+	TSpline3 *s3 = new TSpline3("Gr", gr);
+	interpolX = s3->Eval(x);
+
+    // Draw a function on top
+   // TF1 * jFun= new TF1("new function","10+100*sin(x)/x", 0.0,20.0);
+  //  jFun-> Draw("SAME");
 
     c1->Update();
 }
