@@ -12,7 +12,9 @@ using namespace std;
 //put random numbers into some vectors
 void FillRandVectors(vector< double > &xVector,
                      vector< double > &yVector,
-                     vector< double > &xErrorVector, 	 			     vector< double > &yErrorVector, int n)
+                     vector< double > &xErrorVector, 	 			     
+					 vector< double > &yErrorVector, 
+					 int n)
 {
     //Call TRandom3
 
@@ -61,9 +63,8 @@ TGraphErrors *LoadGraphFromVectors(std::vector< double > xVector, std::vector< d
 }
 
 //Main of the program
-void TwoPlots()
+void TwoPlotsModified()
 {
-
     // making vectors
     vector <double> xVector, yVector, xErrorVector,
            yErrorVector;
