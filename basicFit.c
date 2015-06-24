@@ -23,7 +23,7 @@ void basicFit() {
 	polynomials.push_back("pol3");
 	polynomials.push_back("pol4");
 	polynomials.push_back("pol5");
-	polynomials.push_back("pol6");
+	//polynomials.push_back("pol6");
 
 	gStyle->SetOptFit(1111);
 
@@ -46,8 +46,9 @@ void basicFit() {
 	}
 
 	TCanvas *c2 = new TCanvas("c2", "Chi square", 0, 0, 1000, 800);
-	TGraph *g2 = LoadGraphFromVectors(newPlotX, newPlotY)
+	TGraph *g2 = LoadGraphFromVectors(newPlotX, newPlotY);
 	g2->Draw("ap");
+	c2-> Update();
 }
 
 void FillRandVectors(vector<double> &xVector, vector< double > &yVector, int n)
