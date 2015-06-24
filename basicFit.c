@@ -1,14 +1,19 @@
-const Long64_t n = 4;
-Double_t Point_x[n] = { 0, 1, 1.5, 2 };
-Double_t Point_y[n] = { 1.43, 0.368, 0.135, 0.018 };
-vector<TString> polynomials;
+#include "TCanvas.h"
+#include "TGraphErrors.h"
+#include <vector>
+#include <iostream>
+#include "TRandom.h"
+using namespace std;
 
+vector<TString> polynomials;
+vector<double> xVector, yVector;
+const int n = 4;
 
 void basicFit() {
-	// Section 1. Draw the points on a canvas
 	TCanvas *c1 = new TCanvas("c1", "interpolation", 0, 0, 1000, 800);
 
-	TGraph *g1 = new TGraph(n, Point_x, Point_y);
+	FillRandVectors(xVector, yVector, n);
+	TGraph *g1 = LoadGraphFromVectors(xVector, yVector);
 
 	polynomials.push_back("pol0");
 	polynomials.push_back("pol1");
@@ -24,23 +29,51 @@ void basicFit() {
 
 		TF1 *fa1 = new TF1("fa1", curr, 0, 10);
 
-		g1->SetMarkerStyle(20);
-		g1->SetMarkerSize(2);
-
-		g1->GetXaxis()->SetLimits(-1, 3);        // set real range
-		g1->GetXaxis()->SetRangeUser(-0.5, 2.5); // set visible range
-		g1->GetXaxis()->SetTitle("X");
-		g1->GetXaxis()->CenterTitle();
-
-		g1->GetYaxis()->SetLimits(-1, 2.0);
-		g1->GetYaxis()->SetRangeUser(-0.4, 1.6);
-		g1->GetYaxis()->SetTitle("Y");
-		g1->GetYaxis()->CenterTitle();
-
-		g1->Draw("ap"); // options to draw a graph are described on
+		g1->Draw("ap");
 		g1->Fit(fa1);
 
 		c1->Update();
 		gSystem->Sleep(1000);
+	}
+}
+
+void FillRandVectors(vector<double> &xVector, vector< double > &yVector, int n)
+	{
+		//Call TRandom3
+
+		int seed = 98;
+		TRandom3 *jrand = new TRandom3(seed);
+		for (int i = 0; i<n; i = i + 1)
+		{
+			xVector.push_back(jrand->Uniform(20.0));
+			yVector.push_back(jrand->Uniform(5.0, 20.0));
+		}
+		TGraphErrors *gr = LoadGraphFromVectors(xVector, yVector);
+
+		delete jrand;
+	}
+
+TGraph *LoadGraphFromVectors(std::vector< double > xVector, std::vector< double > yVector)
+{
+	int n = xVector.size();
+
+	if ((xVector.size() == yVector.size()))
+	{
+		//Create a graph
+		TGraph *gr = new TGraph(n, &xVector[0], &yVector[0]);
+		gr->SetTitle("");
+		gr->SetMarkerStyle(20);
+		gr->SetMarkerSize(1.2);
+		gr->SetLineWidth(2);
+		gr->GetXaxis()->SetTitle("X axis [Arbitrary Units]");
+		gr->GetXaxis()->CenterTitle();
+		gr->GetYaxis()->SetTitle("Y axis [Arbitrary Units]");
+		gr->GetYaxis()->CenterTitle();
+		return gr;
+	}
+	else
+	{
+		TGraph *gr0 = new TGraph();
+		return gr0;
 	}
 }
