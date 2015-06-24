@@ -6,10 +6,8 @@
 using namespace std;
 
 vector<TString> polynomials;
-vector<double> xVector, yVector, newPlotY;
-vector<int> newPlotX;
-
-const int n = 4;
+vector<double> xVector, yVector, newPlotY, newPlotX;
+const int n = 7;
 
 void basicFit() {
 	TCanvas *c1 = new TCanvas("c1", "interpolation", 0, 0, 1000, 800);
@@ -23,7 +21,7 @@ void basicFit() {
 	polynomials.push_back("pol3");
 	polynomials.push_back("pol4");
 	polynomials.push_back("pol5");
-	//polynomials.push_back("pol6");
+	polynomials.push_back("pol6");
 
 	gStyle->SetOptFit(1111);
 
@@ -36,9 +34,9 @@ void basicFit() {
 		g1->Fit(fa1);
 		double chi2 = fa1->GetChisquare();
 		int nParInt = fa1->GetNpar();
-		//double nPar = (double)nParInt
+		double nPar = (double)nParInt;
 
-		newPlotX.push_back(nParInt);
+		newPlotX.push_back(nPar);
 		newPlotY.push_back(chi2);
 
 		c1->Update();
@@ -46,7 +44,7 @@ void basicFit() {
 	}
 
 	TCanvas *c2 = new TCanvas("c2", "Chi square", 0, 0, 1000, 800);
-	TGraph *g2 = LoadGraphFromVectors(newPlotX, newPlotY);
+	TGraph *g2 = LoadGraphFromVectorsWithUnits(newPlotX, newPlotY);
 	g2->Draw("ap");
 	c2-> Update();
 }
@@ -82,6 +80,31 @@ TGraph *LoadGraphFromVectors(std::vector< double > xVector, std::vector< double 
 		gr->GetXaxis()->SetTitle("X axis [Arbitrary Units]");
 		gr->GetXaxis()->CenterTitle();
 		gr->GetYaxis()->SetTitle("Y axis [Arbitrary Units]");
+		gr->GetYaxis()->CenterTitle();
+		return gr;
+	}
+	else
+	{
+		TGraph *gr0 = new TGraph();
+		return gr0;
+	}
+}
+
+TGraph *LoadGraphFromVectorsWithUnits(std::vector< double > xVector, std::vector< double > yVector)
+{
+	int n = xVector.size();
+
+	if ((xVector.size() == yVector.size()))
+	{
+		//Create a graph
+		TGraph *gr = new TGraph(n, &xVector[0], &yVector[0]);
+		gr->SetTitle("");
+		gr->SetMarkerStyle(20);
+		gr->SetMarkerSize(1.2);
+		gr->SetLineWidth(2);
+		gr->GetXaxis()->SetTitle("Number of parameters");
+		gr->GetXaxis()->CenterTitle();
+		gr->GetYaxis()->SetTitle("Chi square");
 		gr->GetYaxis()->CenterTitle();
 		return gr;
 	}
