@@ -6,7 +6,9 @@
 using namespace std;
 
 vector<TString> polynomials;
-vector<double> xVector, yVector;
+vector<double> xVector, yVector, newPlotY;
+vector<int> newPlotX;
+
 const int n = 4;
 
 void basicFit() {
@@ -23,6 +25,7 @@ void basicFit() {
 	polynomials.push_back("pol5");
 	polynomials.push_back("pol6");
 
+	gStyle->SetOptFit(1111);
 
 	for (int i = 0; i < polynomials.size(); i++) {
 		TString curr = polynomials.at(i);
@@ -31,17 +34,27 @@ void basicFit() {
 
 		g1->Draw("ap");
 		g1->Fit(fa1);
+		double chi2 = fa1->GetChisquare();
+		int nParInt = fa1->GetNpar();
+		//double nPar = (double)nParInt
+
+		newPlotX.push_back(nParInt);
+		newPlotY.push_back(chi2);
 
 		c1->Update();
 		gSystem->Sleep(1000);
 	}
+
+	TCanvas *c2 = new TCanvas("c2", "Chi square", 0, 0, 1000, 800);
+	TGraph *g2 = LoadGraphFromVectors(newPlotX, newPlotY)
+	g2->Draw("ap");
 }
 
 void FillRandVectors(vector<double> &xVector, vector< double > &yVector, int n)
 	{
 		//Call TRandom3
 
-		int seed = 98;
+		int seed = 7898;
 		TRandom3 *jrand = new TRandom3(seed);
 		for (int i = 0; i<n; i = i + 1)
 		{
