@@ -51,17 +51,9 @@ void minuitFit()
 	xError.push_back(1);
 
 
-   int npar = 4;
-   TMinuit *gMinuit = new TMinuit(npar);  //initialize TMinuit with a maximum of 5 params
-   gMinuit->SetFCN(fcn);
-
-   double arglist[10];
-   int ierflg = 0;
-   arglist[0] = 1;
-   gMinuit->mnexcm("SET ERR", arglist ,1,ierflg);
 
 // Set starting values and step sizes for parameters
-   static vector <double> vstart, step;
+	static vector <double> vstart, step;
 	vstart.push_back(3);
 	vstart.push_back(1);
 	vstart.push_back(.1);
@@ -71,11 +63,27 @@ void minuitFit()
 	step.push_back(.1);
 	step.push_back(.01);
 	step.push_back(.001);
+  
 
-   gMinuit->mnparm(0, "a1", vstart.at(0), step.at(0), 0,0,ierflg);
-   gMinuit->mnparm(1, "a2", vstart.at(1), step.at(1), 0,0,ierflg);
-   gMinuit->mnparm(2, "a3", vstart.at(2), step.at(2), 0,0,ierflg);
-   gMinuit->mnparm(3, "a4", vstart.at(3), step.at(3), 0,0,ierflg);
+	 int npar = 4;
+   TMinuit *gMinuit = new TMinuit(npar);  //initialize TMinuit with a maximum of 5 params
+   gMinuit->SetFCN(fcn);
+
+   double arglist[10];
+   int ierflg = 0;
+   arglist[0] = 1;
+   gMinuit->mnexcm("SET ERR", arglist ,1,ierflg);
+
+//stringstream
+//sstream ss;
+//ss<<"a"<<i;
+//-> char*: 
+//ss.str().c_str()
+
+	gMinuit->mnparm(0, "a1", vstart.at(0), step.at(0), 0,0,ierflg);
+	gMinuit->mnparm(1, "a2", vstart.at(1), step.at(1), 0,0,ierflg);
+	gMinuit->mnparm(2, "a3", vstart.at(2), step.at(2), 0,0,ierflg);
+	gMinuit->mnparm(3, "a4", vstart.at(3), step.at(3), 0,0,ierflg);
 
 // Now ready for minimization step
    arglist[0] = 500;
@@ -84,8 +92,18 @@ void minuitFit()
 
 // Print results
    double amin,edm,errdef;
-   int nvpar,nparx,icstat;
+	int nvpar,nparx,icstat;
    gMinuit->mnstat(amin,edm,errdef,nvpar,nparx,icstat);
    //gMinuit->mnprin(3,amin);
+//graph?
+
+	double par0, epar0;
+	gMinuit->GetParameter(0,par0,epar0);
+
+
+	//TCanvas *c1 = new TCanvas("c1", "Minuit", 0, 0, 1000, 800); 
+	//TGraph *minuitGraph= (TGraph*)gMinuit->GetPlot();
+	//minuitGraph->Draw("ap");
+
 }
 
