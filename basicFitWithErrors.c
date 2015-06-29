@@ -12,9 +12,7 @@
 
 using namespace std;
 
-
-
-//fill x,y and error vectors with random points from TRandom#
+// Fill x,y and error vectors with random points from TRandom#
 void FillRandVectors(vector<double> &xVector, vector< double > &yVector, vector< double > &xErrorVector, vector< double > &yErrorVector, int n, int seed = 250)
 {
 	//Call TRandom3
@@ -29,7 +27,7 @@ void FillRandVectors(vector<double> &xVector, vector< double > &yVector, vector<
 	delete jrand;
 }
 
-//Construct a graph from vectors and error vectors
+// Construct a graph from vectors and error vectors
 TGraphErrors *LoadGraphFromVectorsWithError(std::vector< double > xVector, std::vector< double > yVector, std::vector< double > xErrorVector, std::vector< double > yErrorVector, string xTitle, string yTitle)
 {
 	int n = xVector.size();
@@ -50,8 +48,7 @@ TGraphErrors *LoadGraphFromVectorsWithError(std::vector< double > xVector, std::
 		gr->GetYaxis()->CenterTitle();
 		return gr;
 		delete gr;
-	}
-	else
+	} else
 	{
 		TGraphErrors *gr0 = new TGraphErrors();
 		return gr0;
@@ -59,7 +56,7 @@ TGraphErrors *LoadGraphFromVectorsWithError(std::vector< double > xVector, std::
 	}
 }
 
-// construct a graph without errors
+// Construct a graph without errors
 TGraph *LoadGraphFromVectors(std::vector< double > xVector, std::vector< double > yVector, string xTitle, string yTitle )
 {
 	int n = xVector.size();
@@ -78,8 +75,7 @@ TGraph *LoadGraphFromVectors(std::vector< double > xVector, std::vector< double 
 		gr->GetYaxis()->CenterTitle();
 		return gr;
 		delete gr;
-	}
-	else
+	} else
 	{
 		TGraph *gr0 = new TGraph();
 		return gr0;
@@ -88,17 +84,17 @@ TGraph *LoadGraphFromVectors(std::vector< double > xVector, std::vector< double 
 }
 
 
-//main of the program
+// Main of the program
+// Creates random plot, fits polynomials of increasing order to plot, and plots chi square for each fit
 void basicFitWithErrors() {
 
-	// setting variables
+	// Declaring variables
 	const int n = 7;
 	vector<string> polynomials;
-	vector<double> xVector, yVector, xErrorVector, yErrorVector, newPlotY, 	 	newPlotX, tempX, tempY;
-
+	vector<double> xVector, yVector, xErrorVector, yErrorVector, newPlotY, newPlotX, tempX, tempY;
 	
+	// Loading variables
 	FillRandVectors(xVector, yVector, xErrorVector, yErrorVector, n, 807340);
-	
 	polynomials.push_back("pol0");
 	polynomials.push_back("pol1");
 	polynomials.push_back("pol2");
@@ -109,13 +105,9 @@ void basicFitWithErrors() {
 	polynomials.push_back("pol7");
 	polynomials.push_back("pol8");
 
-	
-	TGraphErrors *g1 = LoadGraphFromVectorsWithError(xVector, yVector, 	 	xErrorVector, yErrorVector, "X Axis (arbitrary units)", "Y Axis  	 	(arbitrary units)");
+	TGraphErrors *g1 = LoadGraphFromVectorsWithError(xVector, yVector, xErrorVector, yErrorVector, "X Axis (arbitrary units)", "Y Axis (arbitrary units)");
 	gStyle->SetOptFit(1111);
 	TCanvas *c1 = new TCanvas("c1", "interpolation", 0, 0, 1000, 800); 
-
-
-
 
 	for (int i = 0; i < (int)polynomials.size(); i++) {
 		string curr = polynomials.at(i);
