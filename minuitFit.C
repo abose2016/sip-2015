@@ -1,25 +1,18 @@
-// Example of a program to fit non-equidistant data points
-//   =======================================================
-//
-//   The fitting function fcn is a simple chisquare function
-//   The data consists of 5 data points (arrays x,y,z) + the errors in errorsz
-//   More details on the various functions or parameters for these functions
-//   can be obtained in an interactive ROOT session with:
-//    Root > TMinuit *minuit = new TMinuit(10);
-//    Root > minuit->mnhelp(b"*")  to see the list of possible keywords
-//    Root > minuit->mnhelp("SET") explains most parameters
-//Author: Rene Brun
-
+#include <vector>
+#include <iostream>
 #include "TMinuit.h"
+
+using namespace std;
+
 
 //Data definition
 const int nbins = 5;
-double z[5],x[5],y[5],errorz[5];
+vector <double> x,y,xError;
 
 //______________________________________________________________________________
-double func(float x,float y,double *par)
+double func(float x,double *par)
 {
- double value=( ((par[0]*x*x)+ (par[1]*x)+ (par[2]*y*y)+ (par[3]*y)));
+ double value=( ((par[0]*x*x)+ (par[1]*x)+ par[2]));
  return value;
 }
 
@@ -29,7 +22,7 @@ void fcn(int &npar, double *gin, double &f, double *par, int iflag)
    //calculate chisquare
    double chisq = 0;
    for (int i=0;i<nbins; i++) {
-     double delta  = (z[i]-func(x[i],y[i],par))/errorz[i];
+     double delta  = (y[i]-func(x[i],par))/xError[i];
      chisq += delta*delta;
    }
    f = chisq;
@@ -38,31 +31,25 @@ void fcn(int &npar, double *gin, double &f, double *par, int iflag)
 //______________________________________________________________________________
 void minuitFit()
 {
-// The z values
-   z[0]=1;
-   z[1]=0.96;
-   z[2]=0.89;
-   z[3]=0.85;
-   z[4]=0.78;
-// The errors on z values
-   double error = 0.01;
-   errorz[0]=error;
-   errorz[1]=error;
-   errorz[2]=error;
-   errorz[3]=error;
-   errorz[4]=error;
-// the x values
-   x[0]=1.5751;
-   x[1]=1.5825;
-   x[2]=1.6069;
-   x[3]=1.6339;
-   x[4]=1.6706;
-// the y values
-   y[0]=1.0642;
-   y[1]=0.97685;
-   y[2]=1.13168;
-   y[3]=1.128654;
-   y[4]=1.44016;
+	// x values
+	x.push_back(1);
+	x.push_back(2.5);
+	x.push_back(7.67);
+	x.push_back(8);
+	x.push_back(9.1);
+	// y values
+	y.push_back(10);
+	y.push_back(3.5);
+	y.push_back(8.67);
+	y.push_back(25);
+	y.push_back(2);
+	// xError
+	xError.push_back(.2);
+	xError.push_back(.3);
+	xError.push_back(.8);
+	xError.push_back(.1);
+	xError.push_back(1);
+
 
    int npar = 4;
    TMinuit *gMinuit = new TMinuit(npar);  //initialize TMinuit with a maximum of 5 params
@@ -74,12 +61,21 @@ void minuitFit()
    gMinuit->mnexcm("SET ERR", arglist ,1,ierflg);
 
 // Set starting values and step sizes for parameters
-   static double vstart[4] = {3, 1 , 0.1 , 0.01};
-   static double step[4] = {0.1 , 0.1 , 0.01 , 0.001};
-   gMinuit->mnparm(0, "a1", vstart[0], step[0], 0,0,ierflg);
-   gMinuit->mnparm(1, "a2", vstart[1], step[1], 0,0,ierflg);
-   gMinuit->mnparm(2, "a3", vstart[2], step[2], 0,0,ierflg);
-   gMinuit->mnparm(3, "a4", vstart[3], step[3], 0,0,ierflg);
+   static vector <double> vstart, step;
+	vstart.push_back(3);
+	vstart.push_back(1);
+	vstart.push_back(.1);
+	vstart.push_back(.01);
+	
+	step.push_back(.1);
+	step.push_back(.1);
+	step.push_back(.01);
+	step.push_back(.001);
+
+   gMinuit->mnparm(0, "a1", vstart.at(0), step.at(0), 0,0,ierflg);
+   gMinuit->mnparm(1, "a2", vstart.at(1), step.at(1), 0,0,ierflg);
+   gMinuit->mnparm(2, "a3", vstart.at(2), step.at(2), 0,0,ierflg);
+   gMinuit->mnparm(3, "a4", vstart.at(3), step.at(3), 0,0,ierflg);
 
 // Now ready for minimization step
    arglist[0] = 500;
