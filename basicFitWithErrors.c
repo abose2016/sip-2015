@@ -12,9 +12,7 @@
 
 using namespace std;
 
-vector<string> polynomials;
-vector<double> xVector, yVector, xErrorVector, yErrorVector, newPlotY, newPlotX, tempX, tempY;
-const int n = 7;
+
 
 //fill x,y and error vectors with random points from TRandom#
 void FillRandVectors(vector<double> &xVector, vector< double > &yVector, vector< double > &xErrorVector, vector< double > &yErrorVector, int n, int seed = 250)
@@ -31,8 +29,8 @@ void FillRandVectors(vector<double> &xVector, vector< double > &yVector, vector<
 	delete jrand;
 }
 
-//Construct a graph from vectors (need to make the axis titles arguments)
-TGraphErrors *LoadGraphFromVectors(std::vector< double > xVector, std::vector< double > yVector, std::vector< double > xErrorVector, std::vector< double > yErrorVector)
+//Construct a graph from vectors and error vectors
+TGraphErrors *LoadGraphFromVectorsWithError(std::vector< double > xVector, std::vector< double > yVector, std::vector< double > xErrorVector, std::vector< double > yErrorVector, string xTitle, string yTitle)
 {
 	int n = xVector.size();
 
@@ -46,21 +44,23 @@ TGraphErrors *LoadGraphFromVectors(std::vector< double > xVector, std::vector< d
 		gr->SetMarkerStyle(20);
 		gr->SetMarkerSize(1.2);
 		gr->SetLineWidth(2);
-		gr->GetXaxis()->SetTitle("X axis [Arbitrary Units]");
+		gr->GetXaxis()->SetTitle(xTitle.c_str());
 		gr->GetXaxis()->CenterTitle();
-		gr->GetYaxis()->SetTitle("Y axis [Arbitrary Units]");
+		gr->GetYaxis()->SetTitle(yTitle.c_str());
 		gr->GetYaxis()->CenterTitle();
 		return gr;
+		delete gr;
 	}
 	else
 	{
 		TGraphErrors *gr0 = new TGraphErrors();
 		return gr0;
+		delete gr0;
 	}
 }
 
-// Delete once you've made the axis titles arguments
-TGraph *LoadGraphFromVectorsWithUnits(std::vector< double > xVector, std::vector< double > yVector)
+// construct a graph without errors
+TGraph *LoadGraphFromVectors(std::vector< double > xVector, std::vector< double > yVector, string xTitle, string yTitle )
 {
 	int n = xVector.size();
 
@@ -72,16 +72,18 @@ TGraph *LoadGraphFromVectorsWithUnits(std::vector< double > xVector, std::vector
 		gr->SetMarkerStyle(20);
 		gr->SetMarkerSize(1.2);
 		gr->SetLineWidth(2);
-		gr->GetXaxis()->SetTitle("Number of parameters");
+		gr->GetXaxis()->SetTitle(xTitle.c_str());
 		gr->GetXaxis()->CenterTitle();
-		gr->GetYaxis()->SetTitle("Chi square");
+		gr->GetYaxis()->SetTitle(yTitle.c_str());
 		gr->GetYaxis()->CenterTitle();
 		return gr;
+		delete gr;
 	}
 	else
 	{
 		TGraph *gr0 = new TGraph();
 		return gr0;
+		delete gr0;
 	}
 }
 
@@ -89,9 +91,14 @@ TGraph *LoadGraphFromVectorsWithUnits(std::vector< double > xVector, std::vector
 //main of the program
 void basicFitWithErrors() {
 
-	FillRandVectors(xVector, yVector, xErrorVector, yErrorVector, n);
-	TGraphErrors *g1 = LoadGraphFromVectors(xVector, yVector, xErrorVector, yErrorVector);
+	// setting variables
+	const int n = 7;
+	vector<string> polynomials;
+	vector<double> xVector, yVector, xErrorVector, yErrorVector, newPlotY, 	 	newPlotX, tempX, tempY;
 
+	
+	FillRandVectors(xVector, yVector, xErrorVector, yErrorVector, n, 807340);
+	
 	polynomials.push_back("pol0");
 	polynomials.push_back("pol1");
 	polynomials.push_back("pol2");
@@ -102,8 +109,13 @@ void basicFitWithErrors() {
 	polynomials.push_back("pol7");
 	polynomials.push_back("pol8");
 
+	
+	TGraphErrors *g1 = LoadGraphFromVectorsWithError(xVector, yVector, 	 	xErrorVector, yErrorVector, "X Axis (arbitrary units)", "Y Axis  	 	(arbitrary units)");
 	gStyle->SetOptFit(1111);
 	TCanvas *c1 = new TCanvas("c1", "interpolation", 0, 0, 1000, 800); 
+
+
+
 
 	for (int i = 0; i < (int)polynomials.size(); i++) {
 		string curr = polynomials.at(i);
@@ -123,8 +135,8 @@ void basicFitWithErrors() {
 		gSystem->Sleep(1000);
 	}
 
+	TGraph *g2 = LoadGraphFromVectors(newPlotX, newPlotY, "Number of Parameters", "Chi Squared");
 	TCanvas *c2 = new TCanvas("c2", "Chi square", 0, 0, 1000, 800);
-	TGraph *g2 = LoadGraphFromVectorsWithUnits(newPlotX, newPlotY);
 	g2->Draw("ap");
 	c2-> Update();
 }
