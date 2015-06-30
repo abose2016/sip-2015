@@ -16,6 +16,13 @@ double func(float x, double *par)
 }
 
 //______________________________________________________________________________
+double func2(float x, double par0, double par1, double par2, double epar0, double epar1, double epar2)
+{
+	double value = (((par0 * x*x) + (par1 * x) + par2));
+	return value;
+}
+
+//______________________________________________________________________________
 void fcn(int &npar, double *gin, double &f, double *par, int iflag)
 {
 	//calculate chisquare
@@ -112,11 +119,6 @@ void minuitFit()
 	arglist[0] = 1;
 	gMinuit->mnexcm("SET ERR", arglist, 1, ierflg);
 
-	//stringstream
-	//sstream ss;
-	//ss<<"a"<<i;
-	//-> char*: 
-	//ss.str().c_str()
 	for (int i = 0; i < 3; i++) {
 		stringstream ss;
 		ss<<"a"<<i;
@@ -138,7 +140,10 @@ void minuitFit()
 	gMinuit->GetParameter(1, par1, epar1);
 	gMinuit->GetParameter(2, par2, epar2);
 
-
+	stringstream form;
+	form << "(" << par0 << "* x*x +)" << par1 << "* x) + " << par2;
+	TF1 *minFunc = new TF1("minFunc", form.str().c_str(), 0.0, 20.0);
+	minFunc->Draw("SAME");
 
 }
 
