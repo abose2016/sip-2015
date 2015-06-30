@@ -17,6 +17,7 @@ using namespace std;
 //Data definition
 const int nbins = 5;
 vector <double> xVector, yVector, xErrorVector, yErrorVector;
+	
 
 //______________________________________________________________________________
 double func(float x, double *par)
@@ -44,6 +45,23 @@ void fcn(int &npar, double *gin, double &f, double *par, int iflag)
 	f = chisq;
 }
 
+
+
+//______________________________________________________________________________
+// Fill x,y and error vectors with random points from TRandom#
+void FillRandVectors(vector<double> &xVector, vector< double > &yVector, vector< double > &xErrorVector, vector< double > &yErrorVector, int n, int seed = 250, double lowerBound= 5, double upperBound= 20, double lowerErrorBound = .5, double upperErrorBound= 5)
+{
+	//Call TRandom3
+	TRandom3 *jrand = new TRandom3(seed);
+	for (int i = 0; i<n; i = i + 1)
+	{
+		xVector.push_back(jrand->Uniform(upperBound));
+		yVector.push_back(jrand->Uniform(lowerBound, upperBound));
+		xErrorVector.push_back(0);
+		yErrorVector.push_back(jrand->Uniform(lowerErrorBound, upperErrorBound));
+	}
+	delete jrand;
+}
 //______________________________________________________________________________
 // Construct a graph from vectors and error vectors
 TGraphErrors *LoadGraphFromVectorsWithError(vector<double> xVector, vector<double> yVector, vector<double> xErrorVector, vector<double> yErrorVector, string xTitle, string yTitle)
@@ -78,30 +96,10 @@ TGraphErrors *LoadGraphFromVectorsWithError(vector<double> xVector, vector<doubl
 //______________________________________________________________________________
 void tMinuitFit()
 {
-	// x values
-	xVector.push_back(1);
-	xVector.push_back(2.5);
-	xVector.push_back(4.67);
-	xVector.push_back(8);
-	xVector.push_back(9.1);
-	// y values
-	yVector.push_back(10);
-	yVector.push_back(3.5);
-	yVector.push_back(8.67);
-	yVector.push_back(25);
-	yVector.push_back(2);
-	// xError values
-	xErrorVector.push_back(0);
-	xErrorVector.push_back(0);
-	xErrorVector.push_back(0);
-	xErrorVector.push_back(0);
-	xErrorVector.push_back(0);
-	// yError values
-	yErrorVector.push_back(1.2);
-	yErrorVector.push_back(2.3);
-	yErrorVector.push_back(.38);
-	yErrorVector.push_back(.21);
-	yErrorVector.push_back(1);
+
+  
+	double seed = 59050830;
+	FillRandVectors(xVector, yVector, xErrorVector, yErrorVector, nbins, seed);
 
 	TCanvas *c1 = new TCanvas("c1", "interpolation", 0, 0, 1000, 800);
 	TGraphErrors *g1 = LoadGraphFromVectorsWithError(xVector, yVector, xErrorVector, yErrorVector, "X Axis (arbitrary units)", "Y Axis (arbitrary units)");
