@@ -151,7 +151,7 @@ void tMinuitFit()
 	gMinuit->GetParameter(2, par2, epar2);
 
 	stringstream form;
-	form << "(" << par0 << "* x*x +)" << par1 << "* x) + " << par2;
+	form << "(" << par0 << "* x*x) + (" << par1 << "* x) + " << par2;
 	TF1 *minFunc = new TF1("minFunc", form.str().c_str(), 0.0, 20.0);
 	minFunc->Draw("SAME");
 }
