@@ -1,6 +1,19 @@
 #include <vector>
 #include <iostream>
 #include "TMinuit.h"
+#include "TCanvas.h"
+#include "TGraphErrors.h"
+#include "TGraph.h"
+#include <string>
+#include "TRandom3.h"
+#include "TAxis.h"
+#include "TSystem.h"
+#include "TF1.h"
+#include "TStyle.h"
+#include <sstream>
+
+
+
 
 using namespace std;
 
@@ -103,7 +116,7 @@ void minuitFit()
 	step.push_back(.01);
 	step.push_back(.01);
 
-	int npar = 4;
+	int npar = 3;
 	TMinuit *gMinuit = new TMinuit(npar);  //initialize TMinuit with a maximum of 5 params
 	gMinuit->SetFCN(fcn);
 
