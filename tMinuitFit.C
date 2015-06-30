@@ -76,7 +76,7 @@ TGraphErrors *LoadGraphFromVectorsWithError(vector<double> xVector, vector<doubl
 }
 
 //______________________________________________________________________________
-void minuitFit()
+void tMinuitFit()
 {
 	// x values
 	xVector.push_back(1);
