@@ -46,9 +46,9 @@ void matrixMake(){
 	{
 		for (int j = 0; j < matrixSize; j++)
 		{
-			cout << a[i][j] << ",       ";
+			std::cout << a[i][j] << ",       ";
 		}
-		cout << "\n\n";
+		std::cout << "\n\n";
 	}
 
 	//Inversion of matrix A and printing new values to console
@@ -59,20 +59,20 @@ void matrixMake(){
 	{
 		for (int j = 0; j < matrixSize; j++)
 		{
-			std::cout << setprecision(2) << a[i][j] << ",       ";
+			std::cout << setprecision(2)<< a[i][j] << ",       ";
 		}
 		std::cout << "\n\n";
 	}
 
 	//Multiplying the inverted matrix by the original (now stored as matrix B) in order to get the identity matrix
 	a *= b;
-	cout << "Inverted matrix A multiplied by its original (identity matrix)" << endl;
+	std::cout << "Inverted matrix A multiplied by its original (identity matrix)" << std::endl;
 
 	for (int i = 0; i < matrixSize; i++)
 	{
 		for (int j = 0; j < matrixSize; j++)
 		{
-			std::cout << setprecision(2) << a[i][j] << ",   ";
+			std::cout << setprecision(2)<< a[i][j] << ",   ";
 		}
 		std::cout << "\n\n";
 	}
