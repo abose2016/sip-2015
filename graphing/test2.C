@@ -1,5 +1,6 @@
 #include <vector>
 #include <iostream>
+#include <gsl/gsl_interp.h>
 
 void test(){
 	std::vector< double > vx;

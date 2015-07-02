@@ -4,3 +4,6 @@ matrixMake_C.d
 matrixMake_C_ACLiC_dict.def
 tMinuitFit_C.d
 tMinuitFit_C_ACLiC_dict.def
+naturalCubic_C.d
+naturalCubic_C_ACLiC_dict.def
+example.o
