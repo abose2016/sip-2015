@@ -1,0 +1,7 @@
+#include <iostream>
+#include <gsl/gsl_sf_dilog.h>
+
+void gslDemo1()
+{
+	std::cout<<gsl_sf_dilog(0.5)<<std::endl;
+}
