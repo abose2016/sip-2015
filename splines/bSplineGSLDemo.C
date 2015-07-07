@@ -11,9 +11,11 @@
 #include "TGraph.h"
 #include "TAxis.h"
 #include <vector>
+#include "TRandom3.h"
 
 /* number of data points to fit */
 #define N 200
+///what is this syntax? Whydon't we just define it below?
 
 /* number of fit coefficients */
 #define NCOEFFS 12
@@ -55,15 +57,14 @@ void bSplineGSLDemo ()
 	size_t i, j;
 	gsl_bspline_workspace *bw;
 	gsl_vector *B;
-	double dy;
-	gsl_rng *r;
+	gsl_rng *r; //what is this?
 	gsl_vector *c, *w;
-	gsl_vector *x, *y;
+	gsl_vector *xControl, *yControl;
 	gsl_matrix *X, *cov;
 	gsl_multifit_linear_workspace *mw;
 	double chisq, Rsq, dof, tss;
-	vector<double> xValues, yValues;
-
+	vector<double> xValues, yValues, xOrigin, yOrigin;
+ 
 	gsl_rng_env_setup();
 	r = gsl_rng_alloc(gsl_rng_default);
 
@@ -71,31 +72,26 @@ void bSplineGSLDemo ()
 	bw = gsl_bspline_alloc(4, nbreak);
 	B = gsl_vector_alloc(ncoeffs);
 
-	x = gsl_vector_alloc(n);
-	y = gsl_vector_alloc(n);
+	xControl = gsl_vector_alloc(n);
+	yControl = gsl_vector_alloc(n);
 	X = gsl_matrix_alloc(n, ncoeffs);
 	c = gsl_vector_alloc(ncoeffs);
 	w = gsl_vector_alloc(n);
 	cov = gsl_matrix_alloc(ncoeffs, ncoeffs);
 	mw = gsl_multifit_linear_alloc(n, ncoeffs);
+	TRandom3 jrand;
 
 	printf("#m=0,S=0\n");
 	/* this is the data to be fitted */
-	for (i = 0; i < n; ++i)
+	for (i = 0; i < n; i++)
 	{
-		double sigma;
-		double xi = (15.0 / (N - 1)) * i;
-		double yi = cos(xi) * exp(-0.1 * xi);
+		int temp = jrand.Integer(20);
+		gsl_vector_set(xControl, i, i);
+		gsl_vector_set(yControl, i, temp);
+		xOrigin.push_back(i);
+		yOrigin.push_back(temp);
 
-		sigma = 0.1 * yi;
-		dy = gsl_ran_gaussian(r, sigma);
-		yi += dy;
-
-		gsl_vector_set(x, i, xi);
-		gsl_vector_set(y, i, yi);
-		gsl_vector_set(w, i, 1.0 / (sigma * sigma));
-
-		printf("%f %f\n", xi, yi);
+		//printf("%f %f\n", xi, yi);
 	}
 
 	/* use uniform breakpoints on [0, 15] */
@@ -104,7 +100,7 @@ void bSplineGSLDemo ()
 	/* construct the fit matrix X */
 	for (i = 0; i < n; ++i)
 	{
-		double xi = gsl_vector_get(x, i);
+		double xi = gsl_vector_get(xControl, i);
 
 		/* compute B_j(xi) for all j */
 		gsl_bspline_eval(xi, B, bw);
@@ -118,10 +114,10 @@ void bSplineGSLDemo ()
 	}
 
 	/* do the fit */
-	gsl_multifit_wlinear(X, w, y, c, cov, &chisq, mw);
+	gsl_multifit_wlinear(X, w, yControl, c, cov, &chisq, mw);
 
 	dof = n - ncoeffs;
-	tss = gsl_stats_wtss(w->data, 1, y->data, 1, y->size);
+	tss = gsl_stats_wtss(w->data, 1, yControl->data, 1, yControl->size);
 	Rsq = 1.0 - chisq / tss;
 
 	fprintf(stderr, "chisq/dof = %e, Rsq = %f\n", 
@@ -144,8 +140,8 @@ void bSplineGSLDemo ()
 	gsl_rng_free(r);
 	gsl_bspline_free(bw);
 	gsl_vector_free(B);
-	gsl_vector_free(x);
-	gsl_vector_free(y);
+	gsl_vector_free(xControl);
+	gsl_vector_free(yControl);
 	gsl_matrix_free(X);
 	gsl_vector_free(c);
 	gsl_vector_free(w);
@@ -153,8 +149,10 @@ void bSplineGSLDemo ()
 	gsl_multifit_linear_free(mw);
 
 	TGraph *gr = LoadGraphFromVectors(xValues, yValues);
+	TGraph *gr1 = LoadGraphFromVectors(xOrigin, yOrigin);
 	TCanvas *c1 = new TCanvas("c1", "Graph", 200, 10, 700, 500);
-	gr->Draw("apz");
+	gr->Draw("al");
+	gr1->Draw("SAME p");
 
 	c1->Update();
 } 
