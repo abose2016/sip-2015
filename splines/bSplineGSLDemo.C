@@ -15,7 +15,6 @@
 
 /* number of data points to fit */
 #define N 15
-///what is this syntax? Whydon't we just define it below?
 
 /* number of fit coefficients */
 #define NCOEFFS 12
@@ -57,7 +56,7 @@ void bSplineGSLDemo ()
 	size_t i, j;
 	gsl_bspline_workspace *bw;
 	gsl_vector *B;
-	gsl_rng *r; //what is this?
+	gsl_rng *r; 
 	gsl_vector *c, *w;
 	gsl_vector *xControl, *yControl;
 	gsl_matrix *X, *cov;
@@ -82,18 +81,22 @@ void bSplineGSLDemo ()
 	TRandom3 jrand;
 
 	printf("#m=0,S=0\n");
-	/* this is the data to be fitted */
-	for (i = 0; i < n; i++)
-	{
-		int temp = jrand.Integer(20);
-		gsl_vector_set(xControl, i, i);
-		gsl_vector_set(yControl, i, temp);
-		xOrigin.push_back(i);
-		yOrigin.push_back(temp);
+	for (i = 0; i < n; ++i)
+			 {
+				double sigma;
+				double xi = (15.0 / (N - 1)) * i;
+				double yi = jrand.Uniform(20);
+				sigma = 0.1 * yi;
+				 gsl_vector_set(xControl, i, xi);
+				xOrigin.push_back(xi);
+				 gsl_vector_set(yControl, i, yi);
+				yOrigin.push_back(yi);
+				gsl_vector_set(w, i, 1.0 / (sigma * sigma));
 
-		printf("%d %d\n", i, temp);
-	}
+				 printf("%f %f\n", xi, yi);
+			 }
 
+	
 	/* use uniform breakpoints on [0, 15] */
 	gsl_bspline_knots_uniform(0.0, 15.0, bw);
 
@@ -151,11 +154,11 @@ void bSplineGSLDemo ()
 	gsl_matrix_free(cov);
 	gsl_multifit_linear_free(mw);
 
-//	TGraph *gr = LoadGraphFromVectors(xValues, yValues);
+	TGraph *gr = LoadGraphFromVectors(xValues, yValues);
 	TGraph *gr1 = LoadGraphFromVectors(xOrigin, yOrigin);
 	TCanvas *c1 = new TCanvas("c1", "Graph", 200, 10, 700, 500);
-//	gr->Draw("al");
-	gr1->Draw("apz");
+	gr->Draw("al");
+	gr1->Draw("SAME p");
 
 	c1->Update();
 } 
