@@ -14,7 +14,7 @@
 #include "TRandom3.h"
 
 /* number of data points to fit */
-#define N 200
+#define N 15
 ///what is this syntax? Whydon't we just define it below?
 
 /* number of fit coefficients */
@@ -91,7 +91,7 @@ void bSplineGSLDemo ()
 		xOrigin.push_back(i);
 		yOrigin.push_back(temp);
 
-		//printf("%f %f\n", xi, yi);
+		printf("%d %d\n", i, temp);
 	}
 
 	/* use uniform breakpoints on [0, 15] */
@@ -126,14 +126,17 @@ void bSplineGSLDemo ()
 	/* output the smoothed curve */
 	{
 		double xi, yi, yerr;
-
+		printf("BREAK\n\n\n\n\n");	
+		
 		printf("#m=1,S=0\n");
 		for (xi = 0.0; xi < 15.0; xi += 0.1)
 		{
 			gsl_bspline_eval(xi, B, bw);
 			gsl_multifit_linear_est(B, c, cov, &yi, &yerr);
 			xValues.push_back(xi);
-			yValues.push_back(yi);	
+			yValues.push_back(yi);
+
+			printf("%f %f\n", xi, yi);	
 		}
 	}
 
@@ -148,11 +151,11 @@ void bSplineGSLDemo ()
 	gsl_matrix_free(cov);
 	gsl_multifit_linear_free(mw);
 
-	TGraph *gr = LoadGraphFromVectors(xValues, yValues);
+//	TGraph *gr = LoadGraphFromVectors(xValues, yValues);
 	TGraph *gr1 = LoadGraphFromVectors(xOrigin, yOrigin);
 	TCanvas *c1 = new TCanvas("c1", "Graph", 200, 10, 700, 500);
-	gr->Draw("al");
-	gr1->Draw("SAME p");
+//	gr->Draw("al");
+	gr1->Draw("apz");
 
 	c1->Update();
 } 
