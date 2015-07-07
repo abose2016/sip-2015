@@ -3,6 +3,7 @@
   gSystem->Load("libHist.so");
   gSystem->Load("libGpad.so");
   gSystem->Load("/usr/lib/libgsl.so");
+  gSystem->Load("/usr/lib/libgslcblas.so");
   gSystem->SetMakeSharedLib("cd $BuildDir ; g++ -c $Opt -pipe -Wall -W -Woverloaded-virtual -fPIC -O3 -g -Iinclude -pthread $IncludePath $SourceFiles ;  g++ $ObjectFiles -shared -Wl,-soname,$LibName.so -O  -g -o $SharedLib");
 
 	gStyle->SetPadTickX(1);
