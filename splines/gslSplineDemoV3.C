@@ -12,9 +12,9 @@ void gslSplineDemoV3(double stepSpline =.01)
     const int nControl=10;
     double xControl[nControl]= {1,2,3,4,5,6,7,8,9,10};
     double yControl[nControl];
-		int seed = 7898;
-		TRandom3 *jrand = new TRandom3(seed);
-    jrand.RndmArray(nControl,yControl);    // make a random array
+	 int seed = 7898;
+	 TRandom3 *jrand = new TRandom3(seed);
+    jrand->RndmArray(nControl,yControl);    // make a random array
 
     //initialize the spline
     gsl_interp_accel *acc = gsl_interp_accel_alloc ();
