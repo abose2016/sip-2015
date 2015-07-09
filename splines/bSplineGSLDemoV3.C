@@ -88,9 +88,9 @@ void bSplineGSLDemoV3 (int seed = 7898, double stepSpline = 0.01)
 	for (xi = 0.0; xi < 15.0; xi += stepSpline)
 	{
 		gsl_bspline_eval(xi, B, bw);
-//		gsl_multifit_linear_est(B, c, cov, &yi, &yerr);
+		gsl_multifit_linear_est(B, c, cov, &yi, &yerr);
 		xValues.push_back(xi);
-		yi = gsl_vector_get(B, index);
+//		yi = gsl_vector_get(B, index);
 		yValues.push_back(yi);
 
 		std::cout<< xi<< "   " << yi << std::endl;
