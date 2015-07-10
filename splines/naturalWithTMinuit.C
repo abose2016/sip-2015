@@ -25,16 +25,12 @@
 
 using namespace std;
 
-//Data definition
-vector <double> xVector, yVector, xErrorVector, yErrorVector;
-	
+//Global variables
+int nControl = 15;
+vector<double> xControlCubic, yControlCubic;
 
-//______________________________________________________________________________
-double func(float x, vector< double > vpar)
-{
-	double value = vpar[0] + vpar[1]*x + vpar[2]*x*x;
-	return value;
-}
+gsl_interp_accel *acc = gsl_interp_accel_alloc ();
+gsl_spline *spline = gsl_spline_alloc (gsl_interp_cspline, nControl);	
 
 //______________________________________________________________________________
 double ComputeChi2(vector< double > vpar)
@@ -42,7 +38,7 @@ double ComputeChi2(vector< double > vpar)
 	//calculate chisquare
 	double chisq = 0;
 	for (int i = 0; i < (int)yVector.size(); i++) {
-		double delta = (yVector.at(i) - func(xVector.at(i), vpar)) / yErrorVector.at(i);
+//		double delta = (yVector.at(i) - func(xVector.at(i), vpar)) / yErrorVector.at(i);
 		chisq += delta*delta;
 	}
 	return chisq;
@@ -51,11 +47,29 @@ double ComputeChi2(vector< double > vpar)
 //______________________________________________________________________________
 void fcn(int &npar, double *gin, double &f, double *par, int iflag)
 {
-	vector< double > vpar;
-	vpar.push_back(par[0]);
-	vpar.push_back(par[1]);
-	vpar.push_back(par[2]);
+	//Populate data set with monotonically increasing, uniform x values and randomized y values
+	for (int i = 0; i < nControl; ++i)
+	{
+		xi = ((double) nControl / (nControl - 1)) * i;
+	 	yi = jrand->Uniform(20);
+		xControlCubic.push_back(xi);
+		yControlCubic.push_back(yi);
+	}
 
+   gsl_spline_init (spline, &xControlCubic[0], &yControlCubic[0], nControl);
+
+    int nSpline = 1+int((xControlCubic.back()-xControlCubic.front())/stepSpline);
+    vector <double> xSpline, ySpline;
+    for (int i= 0; i < nSpline; i++)
+    {
+        xSpline.push_back(xControlCubic.front()+i*stepSpline);
+        ySpline.push_back(gsl_spline_eval (spline, xSpline.at(i), acc));
+    }
+    
+	vector< double > vpar;
+	for(int i = 0; i < nControl; i++) {
+		vpar.push_back(par[i]);	
+	}
 	f = ComputeChi2(vpar);
 }
 
@@ -110,24 +124,12 @@ TGraphErrors *LoadGraphFromVectorsWithError(vector<double> xVector, vector<doubl
 //Cubic spline
 TGraph *naturalCubic(double stepSpline, vector <double> xControlCubic, vector <double> yControlCubic)
 {
-		int nControl = xControlCubic.size();
-
-    //initialize the spline
-    gsl_interp_accel *acc = gsl_interp_accel_alloc ();
-    gsl_spline *spline = gsl_spline_alloc (gsl_interp_cspline, nControl);
+//	 int nControl = xControlCubic.size();
 
     //compute the spline
-    gsl_spline_init (spline, &xControlCubic[0], &yControlCubic[0], nControl);
 
     //evaluate the spline
-    int nSpline = 1+int((xControlCubic.back()-xControlCubic.front())/stepSpline);
-    vector <double> xSpline, ySpline;
-    for (int i= 0; i < nSpline; i++)
-    {
-        xSpline.push_back(xControlCubic.front()+i*stepSpline);
-        ySpline.push_back(gsl_spline_eval (spline, xSpline.at(i), acc));
-    }
-    
+
     //clear the spline
     gsl_spline_free (spline);
     gsl_interp_accel_free (acc);
@@ -137,9 +139,6 @@ TGraph *naturalCubic(double stepSpline, vector <double> xControlCubic, vector <d
 
     return grSpline;
 }
-
-
-
 
 //______________________________________________________________________________
 void tMinuitFit()
@@ -151,7 +150,7 @@ void tMinuitFit()
 	TGraphErrors *g1 = LoadGraphFromVectorsWithError(xVector, yVector, xErrorVector, yErrorVector, "X Axis (arbitrary units)", "Y Axis (arbitrary units)");
 
 	// Set starting values and step sizes for parameters
-	int npar = npts-2;
+	int npar = npts;
 	vector<double> vstart, vstep;
 	for(int i=0; i<npar; i++)
 	{
@@ -189,7 +188,6 @@ void tMinuitFit()
 		myMinuit->GetParameter(i, par, epar);
 		vpar.push_back(par);
 	}
-
 
 	TGraph *cGraph = naturalCubic(stepSpline, xVector, yVector);
 	cGraph->SetLineColor(kRed);
