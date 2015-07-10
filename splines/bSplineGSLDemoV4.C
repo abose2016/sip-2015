@@ -5,10 +5,11 @@
 #include <gsl/gsl_statistics.h>
 #include "TCanvas.h"
 #include "TGraph.h"
+#include "TGraphErrors.h"
 #include "TAxis.h"
 #include "TRandom3.h"
 
-void bSplineGSLDemoV4 (int seed = 7898, double stepSpline = 0.01)
+void bSplineGSLDemoV4 (int seed = 96489689, double stepSpline = 0.01)
 {
 	//Initialize variables
 	const int nControl = 15;
@@ -22,18 +23,22 @@ void bSplineGSLDemoV4 (int seed = 7898, double stepSpline = 0.01)
 	//Declare and allocate memory to compose data set of control points
 	gsl_vector *xControl = gsl_vector_alloc(nControl);
 	gsl_vector *yControl = gsl_vector_alloc(nControl);
+	gsl_vector *w = gsl_vector_alloc(nControl);
 
-	//Populate data set with monotonically increasing, uniform x values and randomized y values
+	//Populate data set
 	TRandom3 *jrand = new TRandom3(seed);
-	vector<double> xPlot, yPlot;
+	vector<double> xPlot, yPlot, yError;
 	for (int i = 0; i < nControl; ++i)
 	{
 		double xi = xmin + i*(xmax-xmin)/(nControl-1.);
-		double yi = jrand->Uniform(20);
+		double yi = jrand->Uniform(10,20);
+		double sigma= jrand-> Uniform(1,2);
 		gsl_vector_set(xControl, i, xi);
 		gsl_vector_set(yControl, i, yi);
 		xPlot.push_back(xi);
 		yPlot.push_back(yi);
+		yError.push_back(sigma);
+		gsl_vector_set(w, i, 1.0 / (sigma * sigma));
 	}
 
 	//Create a b spline workspace and allocate its memory
@@ -60,23 +65,16 @@ void bSplineGSLDemoV4 (int seed = 7898, double stepSpline = 0.01)
 
 	//Output the curve and store the values of the spline in two vectors
 	int nValues = 1+int((xPlot.back() - xPlot.front())/stepSpline);
-	vector<double> xValues, yValues;
+	vector<double> xValues, yValues, splineError;
 	for (int i = 0; i < nValues; i++)
 	{
 		double xi = xPlot.front()+i*stepSpline;
 		gsl_bspline_eval(xi, B, bw);
-		double max;
-		for(int j = 0; j < (B->size - 1.0); j++) 
-		{
-			double next = gsl_vector_get(B, j+1);
-			double curr = gsl_vector_get(B, j);
-			if(next > curr) 
-				max = next;
-			else
-				max = curr;
-		}
+		double yerr[nValues], yi;
+		gsl_multifit_linear_est(B, c, cov, &yi, &yerr[i]);
 		xValues.push_back(xi);
-		yValues.push_back(max);
+		yValues.push_back(yi);
+		splineError.push_back(yerr[i]);
 	}
 
 	//Free the memory used
@@ -90,10 +88,12 @@ void bSplineGSLDemoV4 (int seed = 7898, double stepSpline = 0.01)
 	gsl_matrix_free(cov);
 
 	//Load graphs
-	TGraph *grControlPoints = new TGraph(xPlot.size(), &xPlot[0], &yPlot[0]);
+	TGraphErrors *grControlPoints = new TGraphErrors(xPlot.size(), &xPlot[0], &yPlot[0], 0, &yError[0]);
  	grControlPoints->SetMarkerStyle(20);
+	grControlPoints->SetMarkerColor(kBlue);
+	grControlPoints->SetLineColor(kBlue);
 
-	TGraph *grSpline = new TGraph(xValues.size(), &xValues[0], &yValues[0]);
+	TGraphErrors *grSpline = new TGraphErrors(xValues.size(), &xValues[0], &yValues[0],0, &splineError[0]);
 	grSpline->SetTitle("");
 	grSpline->GetXaxis()->SetTitle("X-axis  [A.U.]");
 	grSpline->GetYaxis()->SetTitle("Y-axis  [A.U.]");
@@ -101,6 +101,6 @@ void bSplineGSLDemoV4 (int seed = 7898, double stepSpline = 0.01)
 	//Draw to canvas
 	TCanvas *c1 = new TCanvas("c1", "Graph", 200, 10, 700, 500);
  	c1->cd();
-	grSpline->Draw("al");
+	grSpline->Draw("alp");
 	grControlPoints->Draw("same p");
 } 
