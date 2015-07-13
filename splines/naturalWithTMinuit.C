@@ -45,13 +45,16 @@ double ComputeChi2(vector< double > vpar)
 }
 
 //______________________________________________________________________________
-void fcn(int &npar, double *gin, double &f, double *par, int iflag)
+void fcn(int &npar, double *gin, double &f, double *par, int iflag, int seed = 250, double lowerBound= 5, double upperBound= 20, double lowerErrorBound = .5, double upperErrorBound= 5)
+
 {
-	//Populate data set with monotonically increasing, uniform x values and randomized y values
+	//Populate data
+	TRandom3 *jrand = new TRandom3(seed);
 	for (int i = 0; i < nControl; ++i)
 	{
 		xi = ((double) nControl / (nControl - 1)) * i;
-	 	yi = jrand->Uniform(20);
+	 	yi = jrand->Uniform(lowerBound,upperBound);
+		yErrorVector.push_back(jrand->Uniform(lowerErrorBound, upperErrorBound));
 		xControlCubic.push_back(xi);
 		yControlCubic.push_back(yi);
 	}
@@ -65,40 +68,26 @@ void fcn(int &npar, double *gin, double &f, double *par, int iflag)
         xSpline.push_back(xControlCubic.front()+i*stepSpline);
         ySpline.push_back(gsl_spline_eval (spline, xSpline.at(i), acc));
     }
+
+	//free memory
+	gsl_spline_free (spline);
+  gsl_interp_accel_free (acc);
+	delete jrand;
     
 	vector< double > vpar;
 	for(int i = 0; i < nControl; i++) {
-		vpar.push_back(par[i]);	
+		vpar.push_back(yControlCubic[i]);	
 	}
 	f = ComputeChi2(vpar);
 }
 
 
-
-//______________________________________________________________________________
-// Fill x,y and error vectors with random points from TRandom#
-void FillRandVectors(vector<double> &xVector, vector< double > &yVector, vector< double > &xErrorVector, vector< double > &yErrorVector, int n, int seed = 250, double lowerBound= 5, double upperBound= 20, double lowerErrorBound = .5, double upperErrorBound= 5)
-{
-	//Call TRandom3
-	TRandom3 *jrand = new TRandom3(seed);
-	for (int i = 0; i<n; i = i + 1)
-	{
-		xVector.push_back(jrand->Uniform(upperBound));
-		yVector.push_back(jrand->Uniform(lowerBound, upperBound));
-		xErrorVector.push_back(0);
-		yErrorVector.push_back(jrand->Uniform(lowerErrorBound, upperErrorBound));
-	}
-	delete jrand;
-}
 //______________________________________________________________________________
 // Construct a graph from vectors and error vectors
-TGraphErrors *LoadGraphFromVectorsWithError(vector<double> xVector, vector<double> yVector, vector<double> xErrorVector, vector<double> yErrorVector, string xTitle, string yTitle)
+TGraphErrors *LoadGraphFromVectorsWithError(vector<double> xVector, vector<double> yVector, vector<double> yErrorVector, string xTitle, string yTitle)
 {
 	int n = xVector.size();
-
-	if ((xVector.size() == yVector.size()) &&
-		(yVector.size() == yErrorVector.size()) &&
-		(xErrorVector.size() == yErrorVector.size()))
+	if ((xVector.size() == yVector.size())&&(yVector.size() == yErrorVector.size())
 	{
 		//Create a graph
 		TGraphErrors *gr = new TGraphErrors(n, &xVector[0], &yVector[0], 0, &yErrorVector[0]);
@@ -120,25 +109,6 @@ TGraphErrors *LoadGraphFromVectorsWithError(vector<double> xVector, vector<doubl
 		delete gr0;
 	}
 }
-//_____________________________________________________________________________
-//Cubic spline
-TGraph *naturalCubic(double stepSpline, vector <double> xControlCubic, vector <double> yControlCubic)
-{
-//	 int nControl = xControlCubic.size();
-
-    //compute the spline
-
-    //evaluate the spline
-
-    //clear the spline
-    gsl_spline_free (spline);
-    gsl_interp_accel_free (acc);
-
-    //load the graphs
-    TGraph *grSpline = new TGraph(nSpline,&xSpline[0],&ySpline[0]);
-
-    return grSpline;
-}
 
 //______________________________________________________________________________
 void tMinuitFit()
@@ -146,8 +116,8 @@ void tMinuitFit()
 
 	double seed = 59050830;
 	int npts = 5;
-	FillRandVectors(xVector, yVector, xErrorVector, yErrorVector, npts, seed);
-	TGraphErrors *g1 = LoadGraphFromVectorsWithError(xVector, yVector, xErrorVector, yErrorVector, "X Axis (arbitrary units)", "Y Axis (arbitrary units)");
+	FillRandVectors(xVector, yVector, yErrorVector, npts, seed);
+	TGraphErrors *g1 = LoadGraphFromVectorsWithError(xVector, yVector, yErrorVector, "X Axis (arbitrary units)", "Y Axis (arbitrary units)");
 
 	// Set starting values and step sizes for parameters
 	int npar = npts;
@@ -192,10 +162,6 @@ void tMinuitFit()
 	TGraph *cGraph = naturalCubic(stepSpline, xVector, yVector);
 	cGraph->SetLineColor(kRed);
 
-	stringstream form;
-	form << vpar[0] << "+" << vpar[1] << "*x + " << vpar[2] <<"*x*x";
-
-	TF1 *minFunc = new TF1("minFunc", form.str().c_str(), 0.0, 20.0);
 
 	//Retrieve the chi2 and number of degrees of freedom
 	double chi2 = ComputeChi2(vpar);
@@ -217,7 +183,7 @@ void tMinuitFit()
 	TCanvas *c1 = new TCanvas("c1", "interpolation", 0, 0, 1000, 800);
 	c1->cd();
 	g1->Draw("ap");
-	minFunc->Draw("SAME");
+	cGraph->Draw("SAME");
 	tex.DrawLatex(0.18,0.21,slatex1.str().c_str());
 	tex.DrawLatex(0.18,0.16,slatex2.str().c_str());
 
