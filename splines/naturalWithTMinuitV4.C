@@ -31,8 +31,17 @@ double ComputeChi2(vector< double > ySplineVector)
 	double chisq = 0;
 	for (int i = 0; i < (int)yVector.size(); i++) 
 	{
-		double delta = (yVector.at(i) - ySplineVector.at(i) )/ yErrorVectorH.at(i);
-		chisq += delta*delta;
+
+			if ( ySplineVector.at(i)> yVector.at(i))
+			{
+				double delta = (yVector.at(i) - ySplineVector.at(i) )/ yErrorVectorH.at(i);
+				chisq += delta*delta;
+			}
+			else 
+			{
+				double delta = (yVector.at(i) - ySplineVector.at(i) )/ yErrorVectorL.at(i);
+				chisq += delta*delta;
+			}
 	}
 	return chisq; 
 }
@@ -107,7 +116,7 @@ void tMinuitFit()
 
 	clock_t tcstart = clock();
 	//Load the data
-	int nPoints = 5;
+	int nPoints = 9;
 	double seed = 99846895709;
 	FillRandVectors(nPoints, xVector, yVector, yErrorVectorL, yErrorVectorH, seed); //create random vectors for y values and y error vector
 
@@ -116,7 +125,7 @@ void tMinuitFit()
 	spline = gsl_spline_alloc (gsl_interp_cspline, nPoints);	
 
 	//Initialize Minuit
-	int npar = nPoints;
+	int npar = nPoints-1;
 	vector<double> vstart, vstep;
 	for(int i=0; i<npar; i++) 	//set starting values and step sizes for parameters
 	{
