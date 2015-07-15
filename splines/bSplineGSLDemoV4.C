@@ -14,7 +14,7 @@ void bSplineGSLDemoV4 (int seed = 96489689, double stepSpline = 0.01)
 {
 	//Initialize variables
 	const int nControl = 15;
-	const int ncoeffs =  nControl;
+	const int ncoeffs =  nControl-1;
 	const int orderSpline = 4;
 	const int nbreak = ncoeffs+2-orderSpline;
 
@@ -62,17 +62,7 @@ void bSplineGSLDemoV4 (int seed = 96489689, double stepSpline = 0.01)
 
 	//Do the fit
 	gsl_matrix *cov = gsl_matrix_alloc(ncoeffs, ncoeffs);
-	gsl_multifit_linear(X, yControl, c, cov, &chisq, mw);
-
-	std::cout << "First set " << endl;
-	for (int i = 0; i < ncoeffs; i++) 
-	{
-		for (int j = 0; j < ncoeffs; j++)
-		{
-			std::cout << gsl_matrix_get(cov, i, j) << " ";
-		}
-		std::cout << endl;
-	}		
+	gsl_multifit_linear(X, yControl, c, cov, &chisq, mw);	
 
 	//Output the curve and store the values of the spline in two vectors
 	int nValues = 1+int((xPlot.back() - xPlot.front())/stepSpline);
@@ -81,31 +71,14 @@ void bSplineGSLDemoV4 (int seed = 96489689, double stepSpline = 0.01)
 	{
 		double xi = xPlot.front()+i*stepSpline;
 		gsl_bspline_eval(xi, B, bw);
-		double yerr[nValues], yi;
-		gsl_multifit_linear_est(B, c, cov, &yi, &yerr[i]);
+		double yerr, yi;
+		gsl_multifit_linear_est(B, c, cov, &yi, &yerr);
 		xValues.push_back(xi);
 		yValues.push_back(yi);
-		splineError.push_back(yerr[i]);
+		splineError.push_back(yerr);
+		std::cout<<xi<<" "<<yi<<" "<<yerr<<std::endl;
 	}
 
-	vector<double> covUncertainties;
-	for (int i = 0; i < ncoeffs; i++) 
-	{
-		double curr = gsl_matrix_get(cov, i, i);
-		//std::cout << curr << endl;
-		covUncertainties.push_back(sqrt(gsl_matrix_get(cov, i, i)));
-	//	std::cout << covUncertainties.back() << endl;
-	}
-
-	std::cout << "Second set " << endl;
-	for (int i = 0; i < ncoeffs; i++) 
-	{
-		for (int j = 0; j < ncoeffs; j++)
-		{
-			std::cout << gsl_matrix_get(cov, i, j) << " ";
-		}
-		std::cout << endl;
-	}		
 
 	//Free the memory used
 	gsl_vector_free(xControl);
