@@ -13,7 +13,7 @@
 void bSplineGSLDemoV4 (int seed = 96489689, double stepSpline = 0.01)
 {
 	//Initialize variables
-	const int nControl = 15;
+	const int nControl = 9;
 	const int ncoeffs =  nControl-1;
 	const int orderSpline = 4;
 	const int nbreak = ncoeffs+2-orderSpline;
@@ -76,9 +76,16 @@ void bSplineGSLDemoV4 (int seed = 96489689, double stepSpline = 0.01)
 		xValues.push_back(xi);
 		yValues.push_back(yi);
 		splineError.push_back(yerr);
-		std::cout<<xi<<" "<<yi<<" "<<yerr<<std::endl;
+//		std::cout<<xi<<" "<<yi<<" "<<yerr<<std::endl;
 	}
 
+	//Store the square roots of the values of the diagonal of the covariance matrix (aka the errors)
+	vector<double> covUncertainties;
+	for (int i = 0; i < ncoeffs; i++) 
+	{
+		covUncertainties.push_back(sqrt(gsl_matrix_get(cov, i, i)));
+		std::cout<<covUncertainties.back() << endl;
+	}
 
 	//Free the memory used
 	gsl_vector_free(xControl);
