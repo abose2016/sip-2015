@@ -1,5 +1,6 @@
 #include <math.h>
 #include <vector>
+#include <iostream>
 #include <gsl/gsl_bspline.h>
 #include <gsl/gsl_multifit.h>
 #include <gsl/gsl_statistics.h>
@@ -63,6 +64,16 @@ void bSplineGSLDemoV4 (int seed = 96489689, double stepSpline = 0.01)
 	gsl_matrix *cov = gsl_matrix_alloc(ncoeffs, ncoeffs);
 	gsl_multifit_linear(X, yControl, c, cov, &chisq, mw);
 
+	std::cout << "First set " << endl;
+	for (int i = 0; i < ncoeffs; i++) 
+	{
+		for (int j = 0; j < ncoeffs; j++)
+		{
+			std::cout << gsl_matrix_get(cov, i, j) << " ";
+		}
+		std::cout << endl;
+	}		
+
 	//Output the curve and store the values of the spline in two vectors
 	int nValues = 1+int((xPlot.back() - xPlot.front())/stepSpline);
 	vector<double> xValues, yValues, splineError;
@@ -76,6 +87,25 @@ void bSplineGSLDemoV4 (int seed = 96489689, double stepSpline = 0.01)
 		yValues.push_back(yi);
 		splineError.push_back(yerr[i]);
 	}
+
+	vector<double> covUncertainties;
+	for (int i = 0; i < ncoeffs; i++) 
+	{
+		double curr = gsl_matrix_get(cov, i, i);
+		//std::cout << curr << endl;
+		covUncertainties.push_back(sqrt(gsl_matrix_get(cov, i, i)));
+	//	std::cout << covUncertainties.back() << endl;
+	}
+
+	std::cout << "Second set " << endl;
+	for (int i = 0; i < ncoeffs; i++) 
+	{
+		for (int j = 0; j < ncoeffs; j++)
+		{
+			std::cout << gsl_matrix_get(cov, i, j) << " ";
+		}
+		std::cout << endl;
+	}		
 
 	//Free the memory used
 	gsl_vector_free(xControl);
