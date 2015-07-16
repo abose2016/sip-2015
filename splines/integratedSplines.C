@@ -27,16 +27,16 @@ gsl_interp_accel *acc;
 gsl_spline *spline;
 gsl_bspline_workspace *bw;
 
-vector<double> xData, yData, yErrorData;
+vector<double> xData_GLOB, yData_GLOB, yErrorData_GLOB;
 
 //______________________________________________________________________________
 double ComputeChi2(vector< double > ySplineVector)
 {
 	//calculate chisquare
 	double chisq = 0;
-	for (int i = 0; i < (int)yData.size(); i++) 
+	for (int i = 0; i < (int)yData_GLOB.size(); i++) 
 	{
-		double delta = (yData.at(i) - ySplineVector.at(i) )/ yErrorData.at(i);
+		double delta = (yData_GLOB.at(i) - ySplineVector.at(i) )/ yErrorData_GLOB.at(i);
 		chisq += delta*delta;
 	}
 	return chisq; 
@@ -46,12 +46,12 @@ double ComputeChi2(vector< double > ySplineVector)
 void fcn(int &, double *, double &f, double *par, int )
 {
 	vector< double > vpar;
-	for(int i = 0; i < (int)xData.size(); i++)	vpar.push_back(par[i]); //used to store the values of the par array
+	for(int i = 0; i < (int)xData_GLOB.size(); i++)	vpar.push_back(par[i]); //used to store the values of the par array
 
-	gsl_spline_init (spline, &xData[0], &vpar[0], xData.size()); //initialize the spline
+	gsl_spline_init (spline, &xData_GLOB[0], &vpar[0], xData_GLOB.size()); //initialize the spline
 
 	vector <double> ySpline;
-	for (int i= 0; i < (int)xData.size(); i++) ySpline.push_back(gsl_spline_eval (spline, xData[i], acc));
+	for (int i= 0; i < (int)xData_GLOB.size(); i++) ySpline.push_back(gsl_spline_eval (spline, xData_GLOB[i], acc));
 
 	f = ComputeChi2(ySpline); //calculate chi square - to be minimized by the TMinuit function
 }
@@ -102,8 +102,13 @@ TGraphErrors *LoadGraphFromVectorsWithError(vector<double> xVector, vector<doubl
 
 
 //______________________________________________________________________________
- TGraph *cSpline(int nPoints, int npar, vector <double> xDataC, vector <double> yDataC, vector <double> yErrorDataC, double stepSpline =.01)
+ TGraph *cSpline(int nPoints, int npar, vector <double> xData, vector <double> yData, vector <double> yErrorData, double stepSpline =.01)
 {
+	//Populate the global variables
+	xData_GLOB = xData;
+	yData_GLOB = yData;
+	yErrorData_GLOB = yErrorData;
+
 	//Initialize Minuit
 	vector<double> vstart, vstep;
 	for(int i=0; i<npar; i++) 	//set starting values and step sizes for parameters
@@ -143,12 +148,12 @@ TGraphErrors *LoadGraphFromVectorsWithError(vector<double> xVector, vector<doubl
 	}
 
 	//Store the best-fit spline in a TGraph
-	gsl_spline_init (spline, &xDataC[0], &bestFitParams[0], xDataC.size()); //initialize the spline
+	gsl_spline_init (spline, &xData[0], &bestFitParams[0], xData.size()); //initialize the spline
 
-	int nPointsSpline = int ((xDataC[nPoints-1]-xDataC[0])/stepSpline); //calculate the number of points of the spline
+	int nPointsSpline = int ((xData[nPoints-1]-xData[0])/stepSpline); //calculate the number of points of the spline
 	vector< double > xSpline, ySpline;
 	for (int i= 0; i < nPointsSpline; i++){
-		xSpline.push_back(xDataC[0]+i*stepSpline);
+		xSpline.push_back(xData[0]+i*stepSpline);
 		ySpline.push_back(gsl_spline_eval (spline, xSpline.back(), acc));
 	}
 
@@ -248,6 +253,7 @@ void integratedSplines()
 	const int orderSpline = 4;
 	const int nbreak = npar+2-orderSpline;
 	double stepSpline = 0.01;
+
 	acc = gsl_interp_accel_alloc ();
 	spline = gsl_spline_alloc (gsl_interp_cspline, nPoints);	
 	bw = gsl_bspline_alloc(4, nbreak);
@@ -267,7 +273,7 @@ void integratedSplines()
 	cGraph->SetLineColor(kRed);
 
 	//Control points
-	TGraph *pGraph = new TGraph (nPoints, &xData[0], &yData[0]);
+	TGraphErrors *pGraph = new TGraphErrors(nPoints, &xData[0], &yData[0], 0 ,&yErrorData[0]);
 	pGraph-> SetMarkerStyle(20);
 	pGraph->SetMarkerColor(kBlue);
 
@@ -281,23 +287,10 @@ void integratedSplines()
  	c1->cd();
 	bGraph->Draw("al");
 	cGraph->Draw("same l");
-	pGraph->Draw("same p");
+	pGraph->Draw("same pz");
 
 	//Prints the computation time
 	std::cout<<"B-splines: "<<((float)tbstop-(float)tbstart)/ (CLOCKS_PER_SEC)<<"s"<<std::endl;
 	std::cout<<"Natural cubic splines: "<<((float)tcstop-(float)tcstart)/ (CLOCKS_PER_SEC)<<"s"<<std::endl;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
