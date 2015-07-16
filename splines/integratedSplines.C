@@ -23,9 +23,9 @@
 using namespace std;
 
 //Data definition
-gsl_interp_accel *acc;
-gsl_spline *spline;
-gsl_bspline_workspace *bw;
+gsl_interp_accel *acc_GLOB;
+gsl_spline *spline_GLOB;
+gsl_bspline_workspace *bw_GLOB;
 
 vector<double> xData_GLOB, yData_GLOB, yErrorData_GLOB;
 
@@ -48,10 +48,10 @@ void fcn(int &, double *, double &f, double *par, int )
 	vector< double > vpar;
 	for(int i = 0; i < (int)xData_GLOB.size(); i++)	vpar.push_back(par[i]); //used to store the values of the par array
 
-	gsl_spline_init (spline, &xData_GLOB[0], &vpar[0], xData_GLOB.size()); //initialize the spline
+	gsl_spline_init (spline_GLOB, &xData_GLOB[0], &vpar[0], xData_GLOB.size()); //initialize the spline
 
 	vector <double> ySpline;
-	for (int i= 0; i < (int)xData_GLOB.size(); i++) ySpline.push_back(gsl_spline_eval (spline, xData_GLOB[i], acc));
+	for (int i= 0; i < (int)xData_GLOB.size(); i++) ySpline.push_back(gsl_spline_eval (spline_GLOB, xData_GLOB[i], acc_GLOB));
 
 	f = ComputeChi2(ySpline); //calculate chi square - to be minimized by the TMinuit function
 }
@@ -100,9 +100,8 @@ TGraphErrors *LoadGraphFromVectorsWithError(vector<double> xVector, vector<doubl
 	}
 }
 
-
 //______________________________________________________________________________
- TGraph *cSpline(int nPoints, int npar, vector <double> xData, vector <double> yData, vector <double> yErrorData, double stepSpline =.01)
+ TGraph *cSpline(int nPoints, int npar, vector <double> xData, vector <double> yData, vector <double> yErrorData, double stepSpline =.01, double start = 10., double step = 0.01)
 {
 	//Populate the global variables
 	xData_GLOB = xData;
@@ -113,8 +112,8 @@ TGraphErrors *LoadGraphFromVectorsWithError(vector<double> xVector, vector<doubl
 	vector<double> vstart, vstep;
 	for(int i=0; i<npar; i++) 	//set starting values and step sizes for parameters
 	{
-		vstart.push_back(10.);
-		vstep.push_back(0.01);
+		vstart.push_back(start);
+		vstep.push_back(step);
 	}
 
 	TMinuit *myMinuit = new TMinuit(npar);  //initialize TMinuit with a maximum of npar (5)
@@ -148,13 +147,13 @@ TGraphErrors *LoadGraphFromVectorsWithError(vector<double> xVector, vector<doubl
 	}
 
 	//Store the best-fit spline in a TGraph
-	gsl_spline_init (spline, &xData[0], &bestFitParams[0], xData.size()); //initialize the spline
+	gsl_spline_init (spline_GLOB, &xData[0], &bestFitParams[0], xData.size()); //initialize the spline
 
 	int nPointsSpline = int ((xData[nPoints-1]-xData[0])/stepSpline); //calculate the number of points of the spline
 	vector< double > xSpline, ySpline;
 	for (int i= 0; i < nPointsSpline; i++){
 		xSpline.push_back(xData[0]+i*stepSpline);
-		ySpline.push_back(gsl_spline_eval (spline, xSpline.back(), acc));
+		ySpline.push_back(gsl_spline_eval (spline_GLOB, xSpline.back(), acc_GLOB));
 	}
 
 	
@@ -168,7 +167,7 @@ TGraphErrors *LoadGraphFromVectorsWithError(vector<double> xVector, vector<doubl
 
 }
 //_________________________________________________________________________
-TGraph *bSpline( int nControl, int npar, vector <double> xDataB, vector <double> yDataB, vector <double> yErrorDataB, double stepSpline = 0.01)
+TGraph *bSpline(int nControl, int npar, vector <double> xDataB, vector <double> yDataB, vector <double> yErrorDataB, double stepSpline = 0.01)
 {
 	//Initialize variables
 	double xmin = 0;
@@ -179,7 +178,7 @@ TGraph *bSpline( int nControl, int npar, vector <double> xDataB, vector <double>
 	gsl_vector *yControl = gsl_vector_alloc(nControl);
 	gsl_vector *w = gsl_vector_alloc(nControl);
 
-//Populate data set with monotonically increasing, uniform x values and randomized y values
+//Populate gsl vectors with the appropriate data
 	for (int i = 0; i < nControl; ++i)
 	{
 		double xi = xDataB.at(i);
@@ -191,14 +190,14 @@ TGraph *bSpline( int nControl, int npar, vector <double> xDataB, vector <double>
 	}
 
 	//Create a b spline workspace and allocate its memory
-	gsl_bspline_knots_uniform(xmin, xmax, bw);
+	gsl_bspline_knots_uniform(xmin, xmax, bw_GLOB);
 
 	//Set up the variables for the fit matrix
 	gsl_vector *B = gsl_vector_alloc(npar);
 	gsl_matrix *X = gsl_matrix_alloc(nControl, npar);
 	for (int i = 0; i < nControl; ++i)
 	{
-		gsl_bspline_eval(gsl_vector_get(xControl, i), B, bw);//Compute B_j(xi) for all j 
+		gsl_bspline_eval(gsl_vector_get(xControl, i), B, bw_GLOB);//Compute B_j(xi) for all j 
 		for (int j = 0; j < npar; ++j)	gsl_matrix_set(X, i, j, gsl_vector_get(B, j));//Fill in row i of X
 	}
 
@@ -217,7 +216,7 @@ TGraph *bSpline( int nControl, int npar, vector <double> xDataB, vector <double>
 	for (int i = 0; i < nValues; i++)
 	{
 		double xi = xDataB.front()+i*stepSpline;
-		gsl_bspline_eval(xi, B, bw);
+		gsl_bspline_eval(xi, B, bw_GLOB);
 		double yerr, yi;
 		gsl_multifit_linear_est(B, c, cov, &yi, &yerr);
 		xValues.push_back(xi);
@@ -249,22 +248,22 @@ void integratedSplines()
 	FillRandVectors(nPoints, xData, yData, yErrorData, seed); //create random vectors for y values and y error vector
 
 	//Intialization of the variables
-	const int npar =  nPoints;
+	const int npar = nPoints;
 	const int orderSpline = 4;
 	const int nbreak = npar+2-orderSpline;
 	double stepSpline = 0.01;
 
-	acc = gsl_interp_accel_alloc ();
-	spline = gsl_spline_alloc (gsl_interp_cspline, nPoints);	
-	bw = gsl_bspline_alloc(4, nbreak);
+	acc_GLOB = gsl_interp_accel_alloc ();
+	spline_GLOB = gsl_spline_alloc (gsl_interp_cspline, nPoints);	
+	bw_GLOB = gsl_bspline_alloc(orderSpline, nbreak);
 	
 	//B-spline
 	clock_t tbstart = clock();
 	TGraph *bGraph = bSpline(nPoints, npar, xData, yData, yErrorData, stepSpline);
 	clock_t tbstop = clock();
 	bGraph->SetTitle("");
-  bGraph->GetXaxis()->SetTitle("X-axis  [A.U.]");
-  bGraph->GetYaxis()->SetTitle("Y-axis  [A.U.]");
+	bGraph->GetXaxis()->SetTitle("X-axis  [A.U.]");
+	bGraph->GetYaxis()->SetTitle("Y-axis  [A.U.]");
 
 	//C-spline
 	clock_t tcstart = clock();
@@ -278,9 +277,9 @@ void integratedSplines()
 	pGraph->SetMarkerColor(kBlue);
 
 	//Free the memory for the spline
-	gsl_spline_free (spline); //frees the memory used by the spline
- 	gsl_interp_accel_free (acc);
-	gsl_bspline_free(bw);
+	gsl_spline_free (spline_GLOB); //frees the memory used by the spline
+ 	gsl_interp_accel_free (acc_GLOB);
+	gsl_bspline_free(bw_GLOB);
 
 	//Draw to canvas
 	TCanvas *c1 = new TCanvas("c1", "Graph", 200, 10, 700, 500);
