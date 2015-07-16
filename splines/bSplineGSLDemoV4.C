@@ -14,7 +14,7 @@ void bSplineGSLDemoV4 (int seed = 96489689, double stepSpline = 0.01)
 {
 	//Initialize variables
 	const int nControl = 9;
-	const int ncoeffs =  nControl-1;
+	const int ncoeffs =  nControl;
 	const int orderSpline = 4;
 	const int nbreak = ncoeffs+2-orderSpline;
 
@@ -76,16 +76,10 @@ void bSplineGSLDemoV4 (int seed = 96489689, double stepSpline = 0.01)
 		xValues.push_back(xi);
 		yValues.push_back(yi);
 		splineError.push_back(yerr);
-//		std::cout<<xi<<" "<<yi<<" "<<yerr<<std::endl;
+		std::cout<<xi<<" "<<yi<<" "<<yerr<<std::endl;
 	}
 
-	//Store the square roots of the values of the diagonal of the covariance matrix (aka the errors)
-	vector<double> covUncertainties;
-	for (int i = 0; i < ncoeffs; i++) 
-	{
-		covUncertainties.push_back(sqrt(gsl_matrix_get(cov, i, i)));
-//		std::cout<<covUncertainties.back() << endl;
-	}
+	
 
 	//Free the memory used
 	gsl_vector_free(xControl);
@@ -103,34 +97,15 @@ void bSplineGSLDemoV4 (int seed = 96489689, double stepSpline = 0.01)
 	grControlPoints->SetMarkerColor(kBlue);
 	grControlPoints->SetLineColor(kBlue);
 
-	TGraphErrors *grSpline = new TGraphErrors(xValues.size(), &xValues[0], &yValues[0],0, &splineError[0]);
+	TGraph *grSpline = new TGraph(xValues.size(), &xValues[0], &yValues[0]);
 	grSpline->SetTitle("");
 	grSpline->GetXaxis()->SetTitle("X-axis  [A.U.]");
 	grSpline->GetYaxis()->SetTitle("Y-axis  [A.U.]");
 
-	yError.pop_back();
-	std::cout << "Y error size: " << yError.size() << endl;
-	std::cout << "Cov size: " << covUncertainties.size() << endl;
-		
-	for(int i = 0; i < (int)yError.size()-1; i++)
-	{
-		std::cout << yError.at(i) << "	" << covUncertainties.at(i) << endl;
-	}
-
-	TGraph *grUncert = new TGraph(yError.size(), &covUncertainties[0], &yError[0]);
- 	grUncert->SetMarkerStyle(20);
-	grUncert->SetMarkerColor(kRed);
-	grUncert->SetTitle("Uncertainties");
-	grUncert->GetXaxis()->SetTitle("Uncertainties from cov  [A.U.]");
-	grUncert->GetYaxis()->SetTitle("Errors on the y values  [A.U.]");
-
 	//Draw to canvas
 	TCanvas *c1 = new TCanvas("c1", "Graph", 200, 10, 700, 500);
  	c1->cd();
-	grSpline->Draw("alp");
+	grSpline->Draw("al");
 	grControlPoints->Draw("same p"); 
 
-	TCanvas *c2 = new TCanvas("c2", "Graph of Uncertainties", 200, 10, 700, 500);
-	c2->cd();
-	grUncert->Draw("ap");
 } 

@@ -75,7 +75,7 @@ void FillRandVectors(int nPoints, vector<double> &xVector, vector< double > &yVe
 		yErrorVectorL.push_back(jrand->Uniform(lowerErrorBound, upperErrorBound));
 		yErrorVectorH.push_back(yErrorVectorL.at(i)*.5);
 
-		cout<<yVector[i]<<" "<<yErrorVectorL[i]<<" "<<yErrorVectorH[i]<< endl;
+		cout<<yVector[i]<<" "<<TMath::Sqrt(0.5*(yErrorVectorL[i]*yErrorVectorL[i]+yErrorVectorH[i]*yErrorVectorH[i]))<< endl;
 	}
 	delete jrand;
 }
@@ -125,7 +125,7 @@ void tMinuitFit()
 	spline = gsl_spline_alloc (gsl_interp_cspline, nPoints);	
 
 	//Initialize Minuit
-	int npar = nPoints-1;
+	int npar = nPoints;
 	vector<double> vstart, vstep;
 	for(int i=0; i<npar; i++) 	//set starting values and step sizes for parameters
 	{
@@ -135,6 +135,7 @@ void tMinuitFit()
 
 	TMinuit *myMinuit = new TMinuit(npar);  //initialize TMinuit with a maximum of npar (5)
 	myMinuit->SetFCN(fcn);
+	myMinuit->SetPrintLevel(-1);//No output: -1, output:1
 
 	double arglist[10];
 	int ierflg = 0;
@@ -153,6 +154,7 @@ void tMinuitFit()
 	myMinuit->mnexcm("MIGRAD", arglist, 2, ierflg); //minimization
 
 	//Retrieve best-fit parameters
+	std::cout<<std::endl;
 	vector< double > bestFitParams, e_bestFitParams;
 	for(int i=0; i<npar; i++)
 	{
@@ -160,6 +162,7 @@ void tMinuitFit()
 		myMinuit->GetParameter(i, par, epar); //retrieve best fit parameters
 		bestFitParams.push_back(par);
 		e_bestFitParams.push_back(epar);
+		std::cout<<par<<" "<<epar<<std::endl;
 	}
 
 	//Store the best-fit spline in a TGraph
