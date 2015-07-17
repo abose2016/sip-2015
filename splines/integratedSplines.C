@@ -167,12 +167,8 @@ TGraphErrors *LoadGraphFromVectorsWithError(vector<double> xVector, vector<doubl
 
 }
 //_________________________________________________________________________
-TGraph *bSpline(int nControl, int npar, vector <double> xDataB, vector <double> yDataB, vector <double> yErrorDataB, double stepSpline = 0.01)
+TGraph *bSpline(int nControl, int npar, vector <double> xDataB, vector <double> yDataB, vector <double> yErrorDataB, double stepSpline = 0.01, double xmin = 0, double xmax = 9)
 {
-	//Initialize variables
-	double xmin = 0;
-	double xmax = 15;
-
 	//Declare and allocate memory to compose data set of control points
 	gsl_vector *xControl = gsl_vector_alloc(nControl);
 	gsl_vector *yControl = gsl_vector_alloc(nControl);
@@ -239,12 +235,11 @@ TGraph *bSpline(int nControl, int npar, vector <double> xDataB, vector <double> 
 
 //_________________________________________________________________________________
 
-void integratedSplines() 
+void integratedSplines(double seed = 9382) 
 {
 	//Load the data
 	int nPoints = 9;
 	vector <double> xData, yData, yErrorData; 
-	double seed = 99846895709;
 	FillRandVectors(nPoints, xData, yData, yErrorData, seed); //create random vectors for y values and y error vector
 
 	//Intialization of the variables
@@ -252,6 +247,8 @@ void integratedSplines()
 	const int orderSpline = 4;
 	const int nbreak = npar+2-orderSpline;
 	double stepSpline = 0.01;
+	double xminBSplineWorkspace = 0;
+	double xmaxBSplineWorkspace = 9;
 
 	acc_GLOB = gsl_interp_accel_alloc ();
 	spline_GLOB = gsl_spline_alloc (gsl_interp_cspline, nPoints);	
@@ -259,7 +256,7 @@ void integratedSplines()
 	
 	//B-spline
 	clock_t tbstart = clock();
-	TGraph *bGraph = bSpline(nPoints, npar, xData, yData, yErrorData, stepSpline);
+	TGraph *bGraph = bSpline(nPoints, npar, xData, yData, yErrorData, stepSpline, xminBSplineWorkspace, xmaxBSplineWorkspace);
 	clock_t tbstop = clock();
 	bGraph->SetTitle("");
 	bGraph->GetXaxis()->SetTitle("X-axis  [A.U.]");
