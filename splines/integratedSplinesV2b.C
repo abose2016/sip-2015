@@ -29,9 +29,10 @@ gsl_interp_accel *acc_GLOB;
 gsl_spline *spline_GLOB;
 gsl_bspline_workspace *bw_GLOB;
 
-vector< vector<double> > xEvents_GLOB, yEvents_GLOB, yErrorEvents_GLOB; //each vector is a vector of vectors
-vector< vector<double> > xSplineValues_GLOB, ySplineValues_GLOB, ySplineErrorValues_GLOB;
-vector<double> xData_GLOB, yData_GLOB, yErrorData_GLOB; //temporary vectors
+vector< vector<double> > xEvents_GLOB, yEvents_GLOB, yErrorEvents_GLOB; //each of these is a vector of vectors (of randomized data points)
+vector< vector<double> > xBSplineValues_GLOB, yBSplineValues_GLOB, yBSplineErrorValues_GLOB; //each of these is a vector of vectors (of the appropriate spline values at the same index as the original data points)
+vector< vector<double> > xCSplineValues_GLOB, yCSplineValues_GLOB; 
+vector<double> xData_GLOB, yData_GLOB, yErrorData_GLOB; //temporary global vectors that allow all of the functions to see the chosen data set at any given time
 
 //______________________________________________________________________________
 double ComputeChi2(vector< double > ySplineVector)
@@ -66,6 +67,10 @@ void FillRandVectors(int nPoints, vector<double> &xVector, vector< double > &yVe
 {
 	//Call TRandom3
 	TRandom3 *jrand = new TRandom3(seed);
+	xVector.clear();
+	yVector.clear();
+	yErrorVector.clear();
+
 	for (int i = 0; i < nPoints; i++)
 	{
 		xVector.push_back(i);
@@ -105,7 +110,7 @@ TGraphErrors *LoadGraphFromVectorsWithError(vector<double> xVector, vector<doubl
 }
 
 //______________________________________________________________________________
- TGraph *cSpline(int nPoints, int npar, vector <double> xData, vector <double> yData, vector <double> yErrorData, double stepSpline =.01, double start = 10., double step = 0.01)
+vector< vector<double> > *cSpline(int nPoints, int npar, vector <double> xData, vector <double> yData, vector <double> yErrorData, double stepSpline =.01, double start = 10., double step = 0.01)
 {
 	//Populate the global variables
 	xData_GLOB = xData;
@@ -160,15 +165,12 @@ TGraphErrors *LoadGraphFromVectorsWithError(vector<double> xVector, vector<doubl
 		ySpline.push_back(gsl_spline_eval (spline_GLOB, xSpline.back(), acc_GLOB));
 	}
 
-	
-	// Graph the spline
-	TGraph *grSplineC = new TGraph(nPointsSpline, &xSpline[0], &ySpline[0]);
-	grSplineC->SetTitle("");
-	grSplineC->GetXaxis()->SetTitle("X-axis  [A.U.]");
-	grSplineC->GetYaxis()->SetTitle("Y-axis  [A.U.]");
-	
-	return grSplineC;
+	//Construct a vector of vectors that will store the xSpline values and the ySpline values
+	vector< vector<double> > *cSplineValues;
+	cSplineValues->push_back(xSpline);
+	cSplineValues->push_back(ySpline);
 
+	return cSplineValues;
 }
 //_________________________________________________________________________
 vector< vector<double> > *bSpline(int nControl, int npar, vector <double> xDataB, vector <double> yDataB, vector <double> yErrorDataB, double stepSpline = 0.01, double xmin = 0, double xmax = 9)
@@ -233,10 +235,11 @@ vector< vector<double> > *bSpline(int nControl, int npar, vector <double> xDataB
 	gsl_multifit_linear_free(mw);
 	gsl_matrix_free(cov);
 
+	//Construct a vector of vectors that will store the xSpline, ySpline, and ySplineError values
 	vector< vector<double> > *bSplineValues;
-	bSplineValues.push_back(xValues);
-	bSplineValues.push_back(yValues);
-	bSplineValues.push_back(splineError);
+	bSplineValues->push_back(xValues);
+	bSplineValues->push_back(yValues);
+	bSplineValues->push_back(splineError); //this probably does not work because when the number of parameters is the same as the number of points, yerr is NAN
 
 	return bSplineValues;
 } 
@@ -247,15 +250,29 @@ void integratedSplinesV2b(double seed = 231)
 	//Load the data
 	int nEvents = 1; //number of times the data will be randomized
 	int nPoints = 9;
-	vector <double> xData, yData, yErrorData; 
+	vector <double> xData, yData, yErrorData; //temporary vectors that are only used to get random values from FillRand function
 
 	for(int i = 0; i < nEvents; i++) 
 	{
-		FillRandVectors(nPoints, xData, yData, yErrorData, seed+i); //create random vectors for y values and y error vector
+		FillRandVectors(nPoints, xData, yData, yErrorData, seed*(i+1)); //populates random vectors for y values and y error vector
 		xEvents_GLOB.push_back(xData);
 		yEvents_GLOB.push_back(yData);
 		yErrorEvents_GLOB.push_back(yErrorData);
 	}
+
+//Used to check the values of the global x events, y events, y error events vectors of vectors
+/*	for(int i = 0; i < (int)xEvents_GLOB.size(); i++) 
+	{
+		std::cout << "Index: " << i << endl;
+		for(int j = 0; j < (int)xEvents_GLOB[i].size(); j++)
+		{
+			stringstream ss;
+			ss<<yEvents_GLOB[i][j];
+			std::cout << "	" << ss.str().c_str() << "	";
+		}
+		std::cout << endl;
+		std::cout << endl;
+	} */
 
 	//Intialization of the variables
 	const int npar = nPoints;
@@ -265,8 +282,8 @@ void integratedSplinesV2b(double seed = 231)
 	double xminBSplineWorkspace = 0;
 	double xmaxBSplineWorkspace = 9;
 
-//	acc_GLOB = gsl_interp_accel_alloc ();
-//	spline_GLOB = gsl_spline_alloc (gsl_interp_cspline, nPoints);	
+	acc_GLOB = gsl_interp_accel_alloc ();
+	spline_GLOB = gsl_spline_alloc (gsl_interp_cspline, nPoints);	
 	bw_GLOB = gsl_bspline_alloc(orderSpline, nbreak);
 	
 	//B-spline
@@ -276,40 +293,58 @@ void integratedSplinesV2b(double seed = 231)
 		xData_GLOB = xEvents_GLOB.at(i); //assigning the global variables to the current vector value in the events vector
 		yData_GLOB = yEvents_GLOB.at(i);
 		yErrorData_GLOB = yErrorEvents_GLOB.at(i);
-		vector< vector<double> > bSplineValues = bSpline(nPoints, npar, xData_GLOB, yData_GLOB, yErrorData_GLOB, stepSpline, xminBSplineWorkspace, xmaxBSplineWorkspace);
-		xSplineValues_GLOB.push_back(bSplineValues.at(0));
-		ySplineValues_GLOB.push_back(bSplineValues.at(1));
-		ySplineErrorValues_GLOB.push_back(bSplineValues.at(2));				
+		vector< vector<double> > *bSplineValues = bSpline(nPoints, npar, xData_GLOB, yData_GLOB, yErrorData_GLOB, stepSpline, xminBSplineWorkspace, xmaxBSplineWorkspace);
+		xBSplineValues_GLOB.push_back(bSplineValues->at(0));
+		yBSplineValues_GLOB.push_back(bSplineValues->at(1));
+		yBSplineErrorValues_GLOB.push_back(bSplineValues->at(2));	
+
+		xData_GLOB.clear();
+		yData_GLOB.clear();
+		yErrorData_GLOB.clear();			
 	}
 
 	clock_t tbstop = clock();
 
-	for(int i = 0; i < (int)xSplineValues_GLOB.size(); i++) 
+//Should print the values of the newly populated B spline vectors
+/*	for(int i = 0; i < (int)xSplineValues_GLOB.size(); i++) 
 	{
 		std::cout << "Index: " << i << endl;
-		for(int j = 0; j < (int)xSplineValues_GLOB.at(i).size(); j++)
+		for(int j = 0; j < (int)xSplineValues_GLOB[i].size(); j++)
 		{
 			stringstream ss;
-			ss<<xSplineValues_GLOB.at(j);
+			ss<<ySplineValues_GLOB[i][j];
 			std::cout << "		" << ss.str().c_str() << "		";
 		}
 		std::cout << endl;
-	}
+	} */
 
 	//C-spline
-/*	clock_t tcstart = clock();
-	TGraph *cGraph = cSpline(nPoints, npar, xData, yData, yErrorData, stepSpline);
+	clock_t tcstart = clock();
+
+	for(int i = 0; i < (int)xEvents_GLOB.size(); i++) //loop through each event
+	{
+		xData_GLOB = xEvents_GLOB.at(i); //assigning the global variables to the current vector value in the events vector
+		yData_GLOB = yEvents_GLOB.at(i);
+		yErrorData_GLOB = yErrorEvents_GLOB.at(i);
+		vector< vector<double> > *cSplineValues = cSpline(nPoints, npar, xData_GLOB, yData_GLOB, yErrorData_GLOB, stepSpline);
+		xCSplineValues_GLOB.push_back(cSplineValues->at(0));
+		yCSplineValues_GLOB.push_back(cSplineValues->at(1));
+
+		xData_GLOB.clear();
+		yData_GLOB.clear();
+		yErrorData_GLOB.clear();			
+	}
+
 	clock_t tcstop = clock();
-	cGraph->SetLineColor(kRed);
-*/
+
 	//Control points
-	TGraphErrors *pGraph = new TGraphErrors(nPoints, &xData[0], &yData[0], 0 ,&yErrorData[0]);
-	pGraph-> SetMarkerStyle(20);
-	pGraph->SetMarkerColor(kBlue);
+//	TGraphErrors *pGraph = new TGraphErrors(nPoints, &xData[0], &yData[0], 0 ,&yErrorData[0]);
+//	pGraph-> SetMarkerStyle(20);
+//	pGraph->SetMarkerColor(kBlue);
 
 	//Free the memory for the spline
-//	gsl_spline_free (spline_GLOB); //frees the memory used by the spline
-// 	gsl_interp_accel_free (acc_GLOB);
+	gsl_spline_free (spline_GLOB); //frees the memory used by the spline
+ 	gsl_interp_accel_free (acc_GLOB);
 	gsl_bspline_free(bw_GLOB);
 
 	//Draw to canvas
@@ -321,6 +356,6 @@ void integratedSplinesV2b(double seed = 231)
 */
 	//Prints the computation time
 	std::cout<<"B-splines: "<<((float)tbstop-(float)tbstart)/ (CLOCKS_PER_SEC)<<"s"<<std::endl;
-//	std::cout<<"Natural cubic splines: "<<((float)tcstop-(float)tcstart)/ (CLOCKS_PER_SEC)<<"s"<<std::endl;
+	std::cout<<"Natural cubic splines: "<<((float)tcstop-(float)tcstart)/ (CLOCKS_PER_SEC)<<"s"<<std::endl; 
 }
 
