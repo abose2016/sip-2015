@@ -247,7 +247,7 @@ vector< vector<double> > bSpline(int nControl, int npar, vector <double> xDataB,
 } 
 
 //_________________________________________________________________________________
-void integratedSplinesV2b(double seed = 231) 
+void integratedSplinesV3(double seed = 231) 
 {
 	//Load the data
 	int nEvents = 1000; //number of times the data will be randomized
@@ -310,20 +310,6 @@ void integratedSplinesV2b(double seed = 231)
 		timeb.push_back(((float)tbstop-(float)tbstart)/ CLOCKS_PER_SEC);		
 	}
 
-	
-
-//Should print the values of the newly populated B spline vectors
-/*	for(int i = 0; i < (int)xSplineValues_GLOB.size(); i++) 
-	{
-		std::cout << "Index: " << i << endl;
-		for(int j = 0; j < (int)xSplineValues_GLOB[i].size(); j++)
-		{
-			stringstream ss;
-			ss<<ySplineValues_GLOB[i][j];
-			std::cout << "		" << ss.str().c_str() << "		";
-		}
-		std::cout << endl;
-	} */
 
 	//C-spline
 	
@@ -348,7 +334,9 @@ void integratedSplinesV2b(double seed = 231)
 		timec.push_back(((float)tcstop-(float)tcstart)/ CLOCKS_PER_SEC);						
 	}
 
-	// time histogram
+//Histograms______________________________________________________________________________________
+
+	// time
 	int nbins = 100;
 	double xlow = 0;
 	double xup = 0.001;
@@ -362,6 +350,60 @@ void integratedSplinesV2b(double seed = 231)
 		hello2->Fill(timeb.at(i));
 		hello3->Fill(timec.at(i));	
 	}
+/*	// linearity - only works when npar is less than npoints
+	int nbinsL = 8;
+	int xlowL = 0;
+	int xupL = 8;
+	vector <double> linear;
+	for(int i = 0; i < (int)yEvents_GLOB.size(); i++) 
+	{
+		for(int j = 1; j < (int)yEvents_GLOB[i].size(); j++)
+		{
+			linear.push_back(yBSplineErrorValues_GLOB[i][j]/yEvents_GLOB[i][j]);
+		}
+	}	
+	
+	TH1D *linearHist = new TH1D("Linearity check","Linearity; xAxis; yAxis", nbinsL, xlowL, xupL); 
+
+	for (int i = 0; i < (int)linear.size(); i++) linearHist->Fill(linear.at(i));
+	TCanvas *canLinear = new TCanvas("c5", "Linearity Histogram");
+	canLinear->cd();
+	linearHist->Draw(""); */
+
+	// interpolation for B spline
+	int nbinsI = 40;
+	int xlowI = -4;
+	int xupI = 4;
+	vector <double> interpB;
+	for(int i = 0; i < (int)yEvents_GLOB.size(); i++) 
+	{
+		for(int j = 1; j < (int)yEvents_GLOB[i].size(); j++)
+		{
+			interpB.push_back(yEvents_GLOB[i][j]-yBSplineValues_GLOB[i][j]);
+		}
+	}	
+
+	TH1D *interpHistB = new TH1D("Interp B","Interp; xAxis; yAxis", nbinsI, xlowI, xupI); 
+	for ( int i=0; i<(int)interpB.size(); i++) interpHistB->Fill(interpB.at(i));
+
+	// interpolation for C spline
+	vector <double> interpC;
+	for(int i = 0; i < (int)yEvents_GLOB.size(); i++) 
+	{
+		for(int j = 1; j < (int)yEvents_GLOB[i].size(); j++)
+		{
+			interpC.push_back(yEvents_GLOB[i][j]-yCSplineValues_GLOB[i][j]);
+		}
+	}	
+
+	TH1D *interpHistC = new TH1D("Interp C","Interp; xAxis; yAxis", nbinsI, xlowI, xupI); 
+	for ( int i=0; i<(int)interpC.size(); i++) interpHistC->Fill(interpC.at(i));
+	interpHistC->SetLineColor(kRed);
+	
+	TCanvas *canInterp = new TCanvas("c6", "Interpolation Histogram");
+	canInterp->cd();
+	interpHistB->Draw("");
+	interpHistC->Draw("same");
 
 	//Legends
 	TLegend *leg = new TLegend(0.75,0.70,0.4,0.85);
