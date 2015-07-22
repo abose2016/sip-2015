@@ -195,12 +195,16 @@ void integratedSplinesV5(double seed = 231)
 	//Load the data
 	int nEvents = 1000; //number of times the data will be randomized
 	int nPoints = 9;
+	double lowerBound = 10; //bounds for random vector function
+	double upperBound = 20;
+	double lowerErrorBound = 1;
+	double upperErrorBound = 2;
 
 	vector< vector<double> > xEvents, yEvents, yErrorEvents; //each of these is a vector of vectors (of randomized data points)
 	for(int i = 0; i < nEvents; i++) 
 	{
 		vector <double> xData, yData, yErrorData; //temporary vectors that are only used to get random values from FillRand function
-		FillRandVectors(nPoints, xData, yData, yErrorData, seed*(i+1)); //populates random vectors for y values and y error vector
+		FillRandVectors(nPoints, xData, yData, yErrorData, seed*(i+1), lowerBound, upperBound, lowerErrorBound, upperErrorBound); //populates random vectors for y values and y error vector
 		xEvents.push_back(xData);
 		yEvents.push_back(yData);
 		yErrorEvents.push_back(yErrorData);
@@ -319,9 +323,9 @@ void integratedSplinesV5(double seed = 231)
 	double xlow = 0;
 	double xup = 1.;
 
-	TH1D *hTimeB = new TH1D("Time","; time [ms]; number of runs", nbins, xlow, xup); 
+	TH1D *hTimeB = new TH1D("Time","Timing; time [ms]; Number of Events", nbins, xlow, xup); 
 	hTimeB->SetStats(0);
-	TH1D *hTimeC = new TH1D("TimeC","; time [ms]; number of runs", nbins, xlow, xup); 
+	TH1D *hTimeC = new TH1D("TimeC","Timing; time [ms]; Number of Events", nbins, xlow, xup); 
 	hTimeC->SetLineColor(kRed);
 	hTimeC->SetStats(0);
 
@@ -340,7 +344,6 @@ void integratedSplinesV5(double seed = 231)
 			double key = xEvents[i][j];
 			int indexForB = binarySearch(xBSplineValues[i], key);
 			int indexForC = binarySearch(xCSplineValues[i], key);
-//			std::cout << "B: " << indexForB << " C: " << indexForC << endl;
 			if(indexForB != -1) 
 				interpB.push_back( (yEvents[i][j]-yBSplineValues[i][indexForB])/yErrorEvents[i][indexForB] );
 			if(indexForC != -1)
@@ -351,11 +354,12 @@ void integratedSplinesV5(double seed = 231)
 	int nbinsI = 40;
 	int xlowI = -4;
 	int xupI = 4;
-	TH1D *hInterpB = new TH1D("Interp B","; xAxis; yAxis", nbinsI, xlowI, xupI); 
+	TH1D *hInterpB = new TH1D("Interp B","Interpolation; Distance between spline and data normalized by error; Number of Events", nbinsI, xlowI, xupI); 
 	for(int i=0; i<(int)interpB.size(); i++) hInterpB->Fill(interpB.at(i));
 	hInterpB->SetStats(0);
 
-	TH1D *hInterpC = new TH1D("Interp C","; xAxis; yAxis", nbinsI, xlowI, xupI); 
+
+	TH1D *hInterpC = new TH1D("Interp C","Interpolation; Distance between spline and data normalized by error; Number of Events", nbinsI, xlowI, xupI); 
 	for (int i=0; i<(int)interpC.size(); i++) hInterpC->Fill(interpC.at(i));
 	hInterpC->SetLineColor(kRed);
 	hInterpC->SetStats(0);	
@@ -363,12 +367,13 @@ void integratedSplinesV5(double seed = 231)
 	//Draws______________________________________________________________________________________
 
 	//Interpolation 
-	TLegend *legInterp = new TLegend(0.75,0.70,0.4,0.85);
+	TLegend *legInterp = new TLegend(0.9,0.70,0.75,0.85);
 	legInterp->SetLineColor(kWhite); 
 	legInterp->SetFillColor(kWhite);
 	legInterp->SetMargin(0.3); 
 	legInterp->AddEntry(hInterpB,"b-spline","l");
 	legInterp->AddEntry(hInterpC,"c-spline","l");
+	legInterp->SetTextSize(0.05);
 
 	TCanvas *c1 = new TCanvas("c1", "Interpolation distance");
 	c1->cd();
@@ -377,12 +382,13 @@ void integratedSplinesV5(double seed = 231)
 	legInterp->Draw();
 
 	//Time
-	TLegend *legTime = new TLegend(0.75,0.70,0.4,0.85);
+	TLegend *legTime = new TLegend(0.9,0.70,0.75,0.85);
 	legTime->SetLineColor(kWhite); 
 	legTime->SetFillColor(kWhite);
 	legTime->SetMargin(0.3); 
 	legTime->AddEntry(hTimeB,"b-spline","l");
 	legTime->AddEntry(hTimeC,"c-spline","l");
+	legTime->SetTextSize(0.05);
 
 	TCanvas *c2 = new TCanvas("c2", "Computation time");
 	c2->cd();
@@ -390,7 +396,7 @@ void integratedSplinesV5(double seed = 231)
 	hTimeC->Draw("same");
 	legTime-> Draw();
 
-	//Free the memory
+	//Free the memory____________________________________________________________________________
 	gsl_spline_free (spline_GLOB); 
  	gsl_interp_accel_free (acc_GLOB);
 	gsl_bspline_free(bw);
