@@ -29,7 +29,6 @@ using namespace std;
 //Data definition
 gsl_interp_accel *acc_GLOB;
 gsl_spline *spline_GLOB;
-gsl_bspline_workspace *bw_GLOB;// -> PASSED AS ARGUMENT 
 
 vector<double> xData_GLOB, yData_GLOB, yErrorData_GLOB; //temporary global vectors that allow all of the functions to see the chosen data set at any given time
 
@@ -195,14 +194,8 @@ vector< vector<double> > cSpline(int nPoints, int npar, vector <double> xData, v
 	return cSplineValues;
 }
 //_________________________________________________________________________
-vector< vector<double> > bSpline(int nControl, int npar, vector <double> xDataB, vector <double> yDataB, vector <double> yErrorDataB, double stepSpline, double xmin, double xmax)
+vector< vector<double> > bSpline(int nControl, int npar, vector <double> xDataB, vector <double> yDataB, vector <double> yErrorDataB, double stepSpline, double xmin, double xmax, gsl_bspline_workspace *bw, gsl_vector *xControl, gsl_vector *yControl, gsl_vector *w /*, gsl_vector *B, gsl_matrix *X, gsl_vector *c, gsl_multifit_linear_workspace *mw, gsl_matrix *cov */)
 {
-
-	//Declare and allocate memory to compose data set of control points
-	gsl_vector *xControl = gsl_vector_alloc(nControl);// -> PASSED AS ARGUMENT 
-	gsl_vector *yControl = gsl_vector_alloc(nControl);// -> PASSED AS ARGUMENT
-	gsl_vector *w = gsl_vector_alloc(nControl);// -> PASSED AS ARGUMENT
-
 	//Populate gsl vectors with the appropriate data
 	for (int i = 0; i < nControl; ++i)
 	{//-> DONE IN THE MAIN
@@ -215,14 +208,14 @@ vector< vector<double> > bSpline(int nControl, int npar, vector <double> xDataB,
 	}//-> DONE IN THE MAIN
 
 	//Create a b spline workspace and allocate its memory
-	gsl_bspline_knots_uniform(xmin, xmax, bw_GLOB);//-> DONE IN THE MAIN
+	gsl_bspline_knots_uniform(xmin, xmax, bw);//-> DONE IN THE MAIN
 
 	//Set up the variables for the fit matrix
 	gsl_vector *B = gsl_vector_alloc(npar);// -> PASSED AS ARGUMENT 
 	gsl_matrix *X = gsl_matrix_alloc(nControl, npar);// -> PASSED AS ARGUMENT 
 	for (int i = 0; i < nControl; ++i)//-> DONE IN THE MAIN
 	{//-> DONE IN THE MAIN
-		gsl_bspline_eval(gsl_vector_get(xControl, i), B, bw_GLOB);//Compute B_j(xi) for all j //-> DONE IN THE MAIN
+		gsl_bspline_eval(gsl_vector_get(xControl, i), B, bw);//Compute B_j(xi) for all j //-> DONE IN THE MAIN
 		for (int j = 0; j < npar; ++j)	gsl_matrix_set(X, i, j, gsl_vector_get(B, j));//Fill in row i of X//-> DONE IN THE MAIN
 	}//-> DONE IN THE MAIN
 
@@ -243,7 +236,7 @@ vector< vector<double> > bSpline(int nControl, int npar, vector <double> xDataB,
 	for (int i = 0; i < nValues; i++)
 	{
 		double xi = xDataB.front()+i*stepSpline;
-		gsl_bspline_eval(xi, B, bw_GLOB);
+		gsl_bspline_eval(xi, B, bw);
 		double yerr, yi;
 		gsl_multifit_linear_est(B, c, cov, &yi, &yerr);
 		xValues.push_back(xi);
@@ -252,8 +245,6 @@ vector< vector<double> > bSpline(int nControl, int npar, vector <double> xDataB,
 	}
 
 	//Free the memory used
-	gsl_vector_free(xControl);//-> DONE IN THE MAIN
-	gsl_vector_free(yControl);//-> DONE IN THE MAIN
 	gsl_vector_free(B);//-> DONE IN THE MAIN
 	gsl_matrix_free(X);//-> DONE IN THE MAIN
 	gsl_vector_free(c);//-> DONE IN THE MAIN
@@ -272,7 +263,6 @@ vector< vector<double> > bSpline(int nControl, int npar, vector <double> xDataB,
 //_________________________________________________________________________________
 void integratedSplinesV4b(double seed = 231) 
 {
-
 	//Load the data
 	int nEvents = 1000; //number of times the data will be randomized
 	int nPoints = 9;
@@ -299,7 +289,7 @@ void integratedSplinesV4b(double seed = 231)
 
 	acc_GLOB = gsl_interp_accel_alloc ();
 	spline_GLOB = gsl_spline_alloc (gsl_interp_cspline, nPoints);	
-	bw_GLOB = gsl_bspline_alloc(orderSpline, nbreak);
+	gsl_bspline_workspace *bw = gsl_bspline_alloc(orderSpline, nbreak); // -> PASSED AS ARGUMENT
 	
 	//B- and C-splines
 	clock_t tbstart, tbstop, tcstart, tcstop;
@@ -307,10 +297,17 @@ void integratedSplinesV4b(double seed = 231)
 
 	vector< vector<double> > xBSplineValues, yBSplineValues;
 	vector< vector<double> > xCSplineValues, yCSplineValues; 
+
+	//Setup for the B-spline
+	//Declare and allocate memory to compose data set of control points
+	gsl_vector *xControl = gsl_vector_alloc(nPoints);
+	gsl_vector *yControl = gsl_vector_alloc(nPoints);
+	gsl_vector *w = gsl_vector_alloc(nPoints);
+
 	for(int i = 0; i < (int)xEvents.size(); i++)
 	{
 		tbstart = clock();
-		vector< vector<double> > bSplineValues = bSpline(nPoints, npar, xEvents.at(i), yEvents.at(i), yErrorEvents.at(i), stepSpline, xminBSplineWorkspace, xmaxBSplineWorkspace);
+		vector< vector<double> > bSplineValues = bSpline(nPoints, npar, xEvents.at(i), yEvents.at(i), yErrorEvents.at(i), stepSpline, xminBSplineWorkspace, xmaxBSplineWorkspace, bw, xControl, yControl, w);
 		tbstop = clock();
 		timeb.push_back(((float)tbstop-(float)tbstart)/ (CLOCKS_PER_SEC/1000.) );		
 
@@ -399,6 +396,10 @@ void integratedSplinesV4b(double seed = 231)
 	//Free the memory for the spline
 	gsl_spline_free (spline_GLOB); //frees the memory used by the spline
  	gsl_interp_accel_free (acc_GLOB);
-	gsl_bspline_free(bw_GLOB);
+	gsl_bspline_free(bw);
+
+	gsl_vector_free(xControl);//-> DONE IN THE MAIN
+	gsl_vector_free(yControl);//-> DONE IN THE MAIN
+
 }
 
