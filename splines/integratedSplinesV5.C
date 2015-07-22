@@ -170,23 +170,21 @@ vector< vector<double> > bSpline(vector <double> xDataB, double stepSpline, gsl_
 
 	//Output the curve and store the values of the spline in two vectors
 	int nValues = 1+int((xDataB.back() - xDataB.front())/stepSpline);
-	vector<double> xValues, yValues, splineError;
+
+	vector< vector<double> > bSplineValues;
+	bSplineValues.push_back( vector< double > ());//x
+	bSplineValues.push_back( vector< double > ());//y
+	bSplineValues.push_back( vector< double > ());//y error
 	for (int i = 0; i < nValues; i++)
 	{
 		double xi = xDataB.front()+i*stepSpline;
 		gsl_bspline_eval(xi, B, bw);
 		double yerr, yi;
 		gsl_multifit_linear_est(B, c, cov, &yi, &yerr);
-		xValues.push_back(xi);
-		yValues.push_back(yi);
-		splineError.push_back(yerr);
+		bSplineValues[0].push_back(xi);
+		bSplineValues[1].push_back(yi);
+		bSplineValues[2].push_back(yerr);
 	}
-
-	//Construct a vector of vectors that will store the xSpline, ySpline, and ySplineError values
-	vector< vector<double> > bSplineValues;
-	bSplineValues.push_back(xValues);
-	bSplineValues.push_back(yValues);
-	bSplineValues.push_back(splineError); //this probably does not work because when the number of parameters is the same as the number of points, yerr is NAN
 
 	return bSplineValues;
 } 
@@ -319,7 +317,7 @@ void integratedSplinesV5(double seed = 231)
 	//Time
 	int nbins = 100;
 	double xlow = 0;
-	double xup = 5.;
+	double xup = 1.;
 
 	TH1D *hTimeB = new TH1D("Time","; time [ms]; number of runs", nbins, xlow, xup); 
 	hTimeB->SetStats(0);
