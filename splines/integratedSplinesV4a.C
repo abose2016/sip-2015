@@ -108,30 +108,8 @@ TGraphErrors *LoadGraphFromVectorsWithError(vector<double> xVector, vector<doubl
 }
 
 //______________________________________________________________________________
-vector< vector<double> > cSpline(int nPoints, int npar, vector <double> xData, double stepSpline, double start, double step, TMinuit *myMinuit)
+vector< vector<double> > cSpline(int nPoints, int npar, vector <double> xData, double stepSpline, TMinuit *myMinuit, double arglist[], int ierflg)
 {
-	
-	double arglist[10];//-> DONE IN THE MAIN
-	int ierflg = 0;//-> DONE IN THE MAIN
-	arglist[0] = 1;//-> DONE IN THE MAIN
-	myMinuit->mnexcm("SET ERR", arglist, 1, ierflg);//-> DONE IN THE MAIN
-
-	//Initialize Minuit
-	vector<double> vstart, vstep;
-	for(int i=0; i<npar; i++) 	//set starting values and step sizes for parameters
-	{
-		vstart.push_back(start);
-		vstep.push_back(step);
-	}
-	for (int i = 0; i < npar; i++) {//-> DONE IN THE MAIN		
-	stringstream ss;//-> DONE IN THE MAIN
-	ss<<"a"<<i;//-> DONE IN THE MAIn
-	myMinuit->mnparm(i, ss.str().c_str(), vstart.at(i), vstep.at(i), 0, 0, ierflg);//-> DONE IN THE MAIN
-	}//-> DONE IN THE MAIN
-
-	//Perform the Minuit fit
-	arglist[0] = 500;//-> DONE IN THE MAIN
-	arglist[1] = 1.;//-> DONE IN THE MAIN
 	myMinuit->mnexcm("MIGRAD", arglist, 2, ierflg); //minimization
 
 	//Retrieve best-fit parameters
@@ -139,20 +117,19 @@ vector< vector<double> > cSpline(int nPoints, int npar, vector <double> xData, d
 	for(int i=0; i<npar; i++)
 	{
 		double par, epar;
-		myMinuit->GetParameter(i, par, epar); //retrieve best fit parameters
+		myMinuit->GetParameter(i, par, epar); 
 		bestFitParams.push_back(par);
 		e_bestFitParams.push_back(epar);
 	}
 
-	//Store the best-fit spline in a TGraph
 	gsl_spline_init (spline_GLOB, &xData[0], &bestFitParams[0], xData.size()); //initialize the spline
-
 	int nPointsSpline = int ((xData[nPoints-1]-xData[0])/stepSpline); //calculate the number of points of the spline
 
 	vector< vector<double> > cSplineValues;
 	cSplineValues.push_back( vector< double > ());//x
 	cSplineValues.push_back( vector< double > ());//y
-	for (int i= 0; i < nPointsSpline; i++){
+	for (int i= 0; i < nPointsSpline; i++)
+	{
 		cSplineValues[0].push_back(xData[0]+i*stepSpline);
 		cSplineValues[1].push_back(gsl_spline_eval (spline_GLOB, cSplineValues[0].back(), acc_GLOB));
 	}
@@ -162,7 +139,6 @@ vector< vector<double> > cSpline(int nPoints, int npar, vector <double> xData, d
 //_________________________________________________________________________
 vector< vector<double> > bSpline(int nControl, int npar, vector <double> xDataB, vector <double> yDataB, vector <double> yErrorDataB, double stepSpline, double xmin, double xmax, gsl_bspline_workspace *bw)
 {
-
 	//Declare and allocate memory to compose data set of control points
 	gsl_vector *xControl = gsl_vector_alloc(nControl);// -> PASSED AS ARGUMENT 
 	gsl_vector *yControl = gsl_vector_alloc(nControl);// -> PASSED AS ARGUMENT
@@ -237,7 +213,6 @@ vector< vector<double> > bSpline(int nControl, int npar, vector <double> xDataB,
 //_________________________________________________________________________________
 void integratedSplinesV4a(double seed = 231) 
 {
-
 	//Load the data
 	int nEvents = 1000; //number of times the data will be randomized
 	int nPoints = 9;
@@ -266,18 +241,38 @@ void integratedSplinesV4a(double seed = 231)
 	double startCSplineWorkspace = 15.;
 	double stepCSplineWorkspace = 1.5;
 
-	
 	acc_GLOB = gsl_interp_accel_alloc ();
 	spline_GLOB = gsl_spline_alloc (gsl_interp_cspline, nPoints);	
 	gsl_bspline_workspace *bw = gsl_bspline_alloc(orderSpline, nbreak);
 
-	// Initialize Minuit_________________________________________________________________________
+	//Setting up TMinuit for C-spline minimization
 	TMinuit *myMinuit = new TMinuit(npar);  //initialize TMinuit with a maximum of npar (5) 
 	myMinuit->SetFCN(fcn);
 	myMinuit->SetPrintLevel(-1);//No output: -1, output:1
 
+	double arglist[10];
+	int ierflg = 0;
+	arglist[0] = 1;
+	myMinuit->mnexcm("SET ERR", arglist, 1, ierflg);
 
+	vector<double> vstart, vstep;
+	for(int i=0; i < npar; i++) 	//set starting values and step sizes for parameters
+	{
+		vstart.push_back(startCSplineWorkspace);
+		vstep.push_back(stepCSplineWorkspace);
+	}
+
+	for (int i = 0; i < npar; i++) 
+	{
+		stringstream ss;
+		ss<<"a"<<i;
+		myMinuit->mnparm(i, ss.str().c_str(), vstart.at(i), vstep.at(i), 0, 0, ierflg);
+	}
 	
+	//Perform the Minuit fit
+	arglist[0] = 500;
+	arglist[1] = 1.;
+
 	//B and C spline loops__________________________________________________________________________
 	clock_t tbstart, tbstop, tcstart, tcstop;
 	vector <double> timeb, timec;
@@ -295,7 +290,7 @@ void integratedSplinesV4a(double seed = 231)
 		yBSplineValues.push_back(bSplineValues.at(1));
 
 		tcstart = clock();
-		vector< vector<double> > cSplineValues = cSpline(nPoints, npar, xEvents.at(i), stepSpline, startCSplineWorkspace, stepCSplineWorkspace, myMinuit);
+		vector< vector<double> > cSplineValues = cSpline(nPoints, npar, xEvents.at(i), stepSpline, myMinuit, arglist, ierflg);
 		tcstop = clock();
 		timec.push_back(((float)tcstop-(float)tcstart)/ (CLOCKS_PER_SEC/1000.) );		
 
@@ -308,7 +303,7 @@ void integratedSplinesV4a(double seed = 231)
 	//Time
 	int nbins = 100;
 	double xlow = 0;
-	double xup = 1.;
+	double xup = 5.;
 
 	TH1D *hTimeB = new TH1D("Time","; time [ms]; number of runs", nbins, xlow, xup); 
 	hTimeB->SetStats(0);
