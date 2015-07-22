@@ -108,6 +108,31 @@ TGraphErrors *LoadGraphFromVectorsWithError(vector<double> xVector, vector<doubl
 }
 
 //______________________________________________________________________________
+int binarySearch(vector<double> vector, double key)
+{
+	int start=1, end=(int)vector.size();
+	int mid=(start+end)/2;
+
+	while(start<=end && vector[mid]!=key)
+	{
+		if(vector[mid] < key)
+		{
+			start = mid + 1;
+		}
+		else 
+		{
+			end = mid - 1;
+		}
+		mid = (start+end)/2;
+	}
+
+	if(vector[mid] == key)
+		return mid; 
+	else
+		return -1;
+}
+
+//______________________________________________________________________________
 vector< vector<double> > cSpline(int nPoints, int npar, vector <double> xData, double stepSpline, TMinuit *myMinuit, double arglist[], int ierflg)
 {
 	myMinuit->mnexcm("MIGRAD", arglist, 2, ierflg); //minimization
@@ -323,8 +348,14 @@ void integratedSplinesV4a(double seed = 231)
 	{
 		for(int j = 0; j < (int)yEvents[i].size(); j++)
 		{
-			interpB.push_back( (yEvents[i][j]-yBSplineValues[i][j])/yErrorEvents[i][j] );
-			interpC.push_back( (yEvents[i][j]-yCSplineValues[i][j])/yErrorEvents[i][j] );
+			double key = xEvents[i][j];
+			int indexForB = binarySearch(xBSplineValues[i], key);
+			int indexForC = binarySearch(xCSplineValues[i], key);
+//			std::cout << "B: " << indexForB << " C: " << indexForC << endl;
+			if(indexForB != -1) 
+				interpB.push_back( (yEvents[i][j]-yBSplineValues[i][indexForB])/yErrorEvents[i][indexForB] );
+			if(indexForC != -1)
+				interpC.push_back( (yEvents[i][j]-yCSplineValues[i][indexForC])/yErrorEvents[i][indexForC] );
 		}
 	}	
 
@@ -343,24 +374,32 @@ void integratedSplinesV4a(double seed = 231)
 	//Draws______________________________________________________________________________________
 
 	//Interpolation distance
+	TLegend *legInterp = new TLegend(0.75,0.70,0.4,0.85);
+	legInterp->SetLineColor(kWhite); 
+	legInterp->SetFillColor(kWhite);
+	legInterp->SetMargin(0.3); 
+	legInterp->AddEntry(hInterpB,"b-spline","l");
+	legInterp->AddEntry(hInterpC,"c-spline","l");
+
 	TCanvas *c1 = new TCanvas("c1", "Interpolation distance");
 	c1->cd();
 	hInterpB->Draw("");
 	hInterpC->Draw("same");
+	legInterp->Draw();
 
 	//Time
-	TLegend *leg = new TLegend(0.75,0.70,0.4,0.85);
-	leg->SetLineColor(kWhite); 
-	leg->SetFillColor(kWhite);
-	leg->SetMargin(0.3); 
-	leg->AddEntry(hTimeB,"b-spline","l");
-	leg->AddEntry(hTimeC,"c-spline","l");
+	TLegend *legTime = new TLegend(0.75,0.70,0.4,0.85);
+	legTime->SetLineColor(kWhite); 
+	legTime->SetFillColor(kWhite);
+	legTime->SetMargin(0.3); 
+	legTime->AddEntry(hTimeB,"b-spline","l");
+	legTime->AddEntry(hTimeC,"c-spline","l");
 
 	TCanvas *c2 = new TCanvas("c2", "Computation time");
 	c2->cd();
 	hTimeB->Draw("");
 	hTimeC->Draw("same");
-	leg-> Draw();
+	legTime-> Draw();
 
 	//Free the memory for the spline
 	gsl_spline_free (spline_GLOB); //frees the memory used by the spline
