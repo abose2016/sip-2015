@@ -153,7 +153,7 @@ vector<double> diff(vector <vector<double> > yInterp1, vector <vector<double> > 
 		{
 			sum += abs(yInterp2[i][j] - yInterp1[i][j]);
 		}
-		differences.push_back(sum/(int) yInterp1[0].size());
+		differences.push_back(sqrt(sum/(int)yInterp1[0].size()));
 		sum = 0;
 	}
 
