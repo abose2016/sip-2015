@@ -1,7 +1,6 @@
 #include <vector>
 #include <iostream>
 #include <iomanip>
-#include "TMinuit.h"
 #include "TMath.h"
 #include "TCanvas.h"
 #include "TGraphErrors.h"
@@ -11,18 +10,6 @@
 #include "TAxis.h"
 #include "TSystem.h"
 #include "TF1.h"
-#include "TLatex.h"
-#include "TStyle.h"
-#include <sstream>
-#include <gsl/gsl_spline.h>
-#include <gsl/gsl_bspline.h>
-#include <gsl/gsl_multifit.h>
-#include <gsl/gsl_statistics.h>
-#include <sstream>
-#include <string>
-#include <time.h>
-#include "TH1.h"
-#include "TLegend.h"
 
 using namespace std;
 
@@ -44,7 +31,7 @@ void FillRandVectors(int nPoints, vector<double> &xVector, vector< double > &yVe
 }
 //_____________________________________________________________________________
 
-vector <vector<double> > linearInterpolation( vector<double> xData, vector<double> yData, double stepSpline = 0.01)
+vector <vector<double> > linearInterpolation( vector<double> xData, vector<double> yData, double stepSpline = 0.1)
 {
 	vector <vector<double> > linearInterp;
 	linearInterp.push_back( vector<double> () );//x
@@ -64,17 +51,17 @@ vector <vector<double> > linearInterpolation( vector<double> xData, vector<doubl
 			double y1 = yData.at(i+1);
 			vector< double > xSpline, ySpline;
 
-			for (int j= xData.at(i); j < xData.at(i+1); j=j+stepSpline)
+			for (double j = xData.at(i); j < xData.at(i+1); j += stepSpline)
 			{
 					//temp variables for interp
 					double m = (y1 - y0)/(x1 - x0);
 					double b = -m*x0 + y0;
 					double y = m * (j) + b; 
 					linearInterp[0].push_back(j);
-					linearInterp[1].push_back(y);
+					linearInterp[1].push_back(y); 
 			}
-		}
-	}
+		} 
+	} 
 
 
 	return linearInterp;
@@ -83,19 +70,22 @@ vector <vector<double> > linearInterpolation( vector<double> xData, vector<doubl
 void grapher()
 {
 	vector<double> xData, yData;
-	int nPoints=8;
+	int nPoints = 8;
 	FillRandVectors(nPoints, xData, yData);
-	vector <vector<double> > interpPoints= linearInterpolation(xData, yData);
+	vector <vector<double> > interpPoints = linearInterpolation(xData, yData);
 
 	TGraph *lin = new TGraph(nPoints, &interpPoints[0][0], &interpPoints[1][0]);
-	TGraph *data = new TGraph(nPoints, &xData[0], &yData[0]);
+	lin->SetMarkerColor(kBlue);
 	lin->SetMarkerStyle(20);
-	data->SetMarkerStyle(20);
+
+	TGraph *data = new TGraph(nPoints, &xData[0], &yData[0]);
 	data->SetMarkerColor(kRed);
+	data->SetMarkerStyle(20);
+
 	TCanvas *c1 = new TCanvas("c1", "Linear");
 	c1->cd();
-	lin->Draw("ap");
-	data->Draw("same");
+//	lin->Draw("ap");
+	data->Draw("ap"); 
 }
 
 	
