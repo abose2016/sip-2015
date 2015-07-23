@@ -29,7 +29,6 @@ using namespace std;
 //Data definition
 gsl_interp_accel *acc_GLOB;
 gsl_spline *spline_GLOB;
-gsl_bspline_workspace *bw_GLOB;// -> PASSED AS ARGUMENT 
 
 vector<double> xData_GLOB, yData_GLOB, yErrorData_GLOB; //temporary global vectors that allow all of the functions to see the chosen data set at any given time
 
@@ -109,6 +108,7 @@ TGraphErrors *LoadGraphFromVectorsWithError(vector<double> xVector, vector<doubl
 }
 
 //______________________________________________________________________________
+// Returns the index of value 'key' in param vector
 int binarySearch(vector<double> vector, double key)
 {
 	int start=0, end=(int)vector.size()-1;
@@ -134,6 +134,7 @@ int binarySearch(vector<double> vector, double key)
 }
 
 //______________________________________________________________________________
+// Uses TMinuit to conduct minimization and calculation of natural cubic spline
 vector< vector<double> > cSpline(int nPoints, int npar, vector <double> xData, double stepSpline, TMinuit *myMinuit)
 {
 	double arglist[10];
@@ -170,6 +171,7 @@ vector< vector<double> > cSpline(int nPoints, int npar, vector <double> xData, d
 	return cSplineValues;
 }
 //_________________________________________________________________________
+// Uses GSL libraries to conduct minimization and fit for B-spline
 vector< vector<double> > bSpline(vector <double> xDataB, double stepSpline, gsl_bspline_workspace *bw, gsl_vector *yControl, gsl_vector *B, gsl_matrix *X, gsl_vector *c, gsl_multifit_linear_workspace *mw, gsl_matrix *cov)
 {	
 	//Do the fit
@@ -213,7 +215,7 @@ void multipleSplinesWithHistogramsMerge(int iEventLook = 163, int nEvents = 1000
 		yErrorEvents.push_back(yErrorData);
 	}
 
-	//Intialization of the variables
+	//Intialization of variables
 	const int npar = nPoints;
 	const int orderSpline = 4;
 	const int nbreak = npar+2-orderSpline;
@@ -273,7 +275,7 @@ void multipleSplinesWithHistogramsMerge(int iEventLook = 163, int nEvents = 1000
 	gsl_matrix *cov = gsl_matrix_alloc(npar, npar);
 	gsl_matrix *X = gsl_matrix_alloc(nPoints, npar);
 
-	//Looping begins for the calculations of the B and C-splines for each event
+//Looping begins for the calculations of the B and C-splines for each event_____________________
 	for(int i = 0; i < (int)xEvents.size(); i++)
 	{
 		//Populate the global variables
@@ -312,8 +314,7 @@ void multipleSplinesWithHistogramsMerge(int iEventLook = 163, int nEvents = 1000
 		yCSplineValues.push_back(cSplineValues.at(1));
 	}
 
-	//Histograms______________________________________________________________________________________
-
+//Histograms______________________________________________________________________________________
 	//Time
 	int nbins = 100;
 	double xlow = 0;
@@ -350,7 +351,7 @@ void multipleSplinesWithHistogramsMerge(int iEventLook = 163, int nEvents = 1000
 	GCspline->SetLineColor(kRed);
 	TGraph *GBspline = new TGraph(xBSplineValues[iEventLook].size(), &xBSplineValues[iEventLook][0], &yBSplineValues[iEventLook][0]);
 	TGraph *Gdata = new TGraph(xEvents[0].size(), &xEvents[iEventLook][0], &yEvents[iEventLook][0]);
-		Gdata->SetMarkerStyle(20);
+	Gdata->SetMarkerStyle(20);
 
 	int nbinsI = 101;
 	double xlowI = -0.1;
@@ -364,8 +365,7 @@ void multipleSplinesWithHistogramsMerge(int iEventLook = 163, int nEvents = 1000
 	hInterpC->SetLineColor(kGreen);
 	hInterpC->SetStats(0);	
 
-	//Draws______________________________________________________________________________________
-
+//Draws______________________________________________________________________________________
 	//Interpolation 
 	TLegend *legInterp = new TLegend(0.9,0.70,0.75,0.85);
 	legInterp->SetLineColor(kWhite); 
