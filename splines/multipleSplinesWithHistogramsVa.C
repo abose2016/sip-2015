@@ -197,25 +197,8 @@ vector< vector<double> > cSpline(int nPoints, int npar, vector <double> xData, v
 	return cSplineValues;
 }
 //_________________________________________________________________________
-vector< vector<double> > bSpline(int nControl, int npar, vector <double> xDataB, vector <double> yDataB, vector <double> yErrorDataB, double stepSpline, gsl_bspline_workspace *bw, gsl_vector *xControl, gsl_vector *yControl, gsl_vector *w, gsl_vector *B /*,gsl_matrix *X*/, gsl_vector *c,gsl_multifit_linear_workspace *mw, gsl_matrix *cov)
-{
-	
-//Populate gsl vectors with the appropriate data
-	for (int i = 0; i < nControl/*nPoints*/; ++i)//-> DONE IN THE MAIN
-	{
-		gsl_vector_set(xControl, i, xDataB.at(i));//-> DONE IN THE MAIN
-		gsl_vector_set(yControl, i, yDataB.at(i));//-> DONE IN THE MAIN
-		gsl_vector_set(w, i, 1.0/(yErrorDataB.at(i)*yErrorDataB.at(i)));//-> DONE IN THE MAIN
-	}//-> DONE IN THE MAIN
-	
-	//Declare variables for the fit and allocate their memory---- putting this in the main was what caused the error
-gsl_matrix *X = gsl_matrix_alloc(nControl, npar);
-	for (int i = 0; i < nControl; ++i)
-	{
-		gsl_bspline_eval(gsl_vector_get(xControl, i), B, bw);//Compute B_j(xi) for all j 
-		for (int j = 0; j < npar; ++j)	gsl_matrix_set(X, i, j, gsl_vector_get(B, j));//Fill in row i of X
-	}
-
+vector< vector<double> > bSpline(vector <double> xDataB, double stepSpline, gsl_bspline_workspace *bw, gsl_vector *yControl, gsl_vector *B, gsl_matrix *X, gsl_vector *c, gsl_multifit_linear_workspace *mw, gsl_matrix *cov)
+{	
 	//Do the fit
 	double chisq;
 	gsl_multifit_linear(X, yControl, c, cov, &chisq, mw);
@@ -235,16 +218,12 @@ gsl_matrix *X = gsl_matrix_alloc(nControl, npar);
 		bSplineValues[1].push_back(yi);
 	}
 
-	//Free the memory used
-	gsl_matrix_free(X);//-> DONE IN THE MAIN
-
 	return bSplineValues;
 } 
 
 //_________________________________________________________________________________
-void multiple(int iEventLook = 165 , int nEvents = 1000, int nPoints = 9, double seed = 231) 
+void multipleSplinesWithHistogramsVa(int iEventLook = 165 , int nEvents = 1000, int nPoints = 9, double seed = 231) 
 {
-
 	//Load the data
 	vector< vector<double> > xEvents, yEvents, yErrorEvents; //each of these is a vector of vectors (of randomized data points)
 	for(int i = 0; i < nEvents; i++) 
@@ -283,6 +262,7 @@ void multiple(int iEventLook = 165 , int nEvents = 1000, int nPoints = 9, double
 	gsl_vector *c = gsl_vector_alloc(npar);// -> PASSED AS ARGUMENT
 	gsl_multifit_linear_workspace *mw = gsl_multifit_linear_alloc(nPoints, npar);// -> PASSED AS ARGUMENT  
 	gsl_matrix *cov = gsl_matrix_alloc(npar, npar);// -> PASSED AS ARGUMENT
+	gsl_matrix *X = gsl_matrix_alloc(nPoints, npar);
 
 	//B- and C-splines_______________________________________________________________________________
 	clock_t tbstart, tbstop, tcstart, tcstop;
@@ -292,8 +272,24 @@ void multiple(int iEventLook = 165 , int nEvents = 1000, int nPoints = 9, double
 	vector< vector<double> > xCSplineValues, yCSplineValues; 
 	for(int i = 0; i < (int)xEvents.size(); i++)
 	{
+		//Populate gsl vectors with the appropriate data
+		for (int j = 0; j < nPoints; ++j)
+		{
+			gsl_vector_set(xControl, j, xEvents[i][j]);
+			gsl_vector_set(yControl, j, yEvents[i][j]);
+			gsl_vector_set(w, j, 1.0/(yErrorEvents[i][j]*yErrorEvents[i][j]));
+		}
+
+		//Declare variables for the fit and allocate their memory---- putting this in the main was what caused the error
+	
+		for (int n = 0; n < nPoints; ++n)
+		{
+			gsl_bspline_eval(gsl_vector_get(xControl, n), B, bw);//Compute B_j(xi) for all j 
+			for (int l = 0; l < npar; ++l)	gsl_matrix_set(X, n, l, gsl_vector_get(B, l));//Fill in row i of X
+		}
+
 		tbstart = clock();
-		vector< vector<double> > bSplineValues = bSpline(nPoints, npar, xEvents.at(i), yEvents.at(i), yErrorEvents.at(i), stepSpline, bw, xControl, yControl, w, B/*, X*/, c, mw, cov);
+		vector< vector<double> > bSplineValues = bSpline(xEvents.at(i), stepSpline, bw, yControl, B, X, c, mw, cov);
 		tbstop = clock();
 		timeb.push_back(((float)tbstop-(float)tbstart)/ (CLOCKS_PER_SEC/1000.) );		
 
@@ -399,7 +395,7 @@ void multiple(int iEventLook = 165 , int nEvents = 1000, int nPoints = 9, double
 	gsl_vector_free(yControl);
 	gsl_vector_free(w);
 	gsl_vector_free(B);
-	/*gsl_matrix_free(X);//-> DONE IN THE MAIN*/
+	gsl_matrix_free(X);//-> DONE IN THE MAIN
 	gsl_vector_free(c);
 	gsl_multifit_linear_free(mw);
 	gsl_matrix_free(cov);
