@@ -78,36 +78,6 @@ void FillRandVectors(int nPoints, vector<double> &xVector, vector< double > &yVe
 	delete jrand;
 }
 //______________________________________________________________________________
-// Construct a graph from vectors and y error vector
-TGraphErrors *LoadGraphFromVectorsWithError(vector<double> xVector, vector<double> yVector, vector<double> yErrorVector, string xTitle, string yTitle)
-{
-	int n = xVector.size();
-
-	if ((xVector.size() == yVector.size()) &&
-		(yVector.size() == yErrorVector.size()))
-	{
-		//Create a graph
-		TGraphErrors *gr = new TGraphErrors(n, &xVector[0], &yVector[0], 0, &yErrorVector[0]);
-		gr->SetTitle("");
-		gr->SetMarkerStyle(20);
-		gr->SetMarkerSize(1.2);
-		gr->SetLineWidth(2);
-		gr->GetXaxis()->SetTitle(xTitle.c_str());
-		gr->GetXaxis()->CenterTitle();
-		gr->GetYaxis()->SetTitle(yTitle.c_str());
-		gr->GetYaxis()->CenterTitle();
-		return gr;
-		delete gr;
-	}
-	else
-	{
-		TGraphErrors *gr0 = new TGraphErrors();
-		return gr0;
-		delete gr0;
-	}
-}
-
-//______________________________________________________________________________
 // Returns the index of value 'key' in param vector
 int binarySearch(vector<double> vector, double key)
 {
@@ -131,6 +101,63 @@ int binarySearch(vector<double> vector, double key)
 		return mid; 
 	else
 		return -1;
+}
+
+//______________________________________________________________________________
+//Makes a linear interpolator and returns a vector of vectors that plot the interpolation
+vector <vector<double> > linearInterpolation( vector<double> xData, vector<double> yData, double stepSpline)
+{
+	vector <vector<double> > linearInterp;
+	linearInterp.push_back( vector<double> () );//x
+	linearInterp.push_back( vector<double> () );//y
+	for(int i = 0; i < (int)xData.size(); i++)
+	{
+		if( i == (int)xData.size()-1)
+		{
+			linearInterp[0].push_back(i);
+			linearInterp[1].push_back(yData.at(i));		
+		}
+		else
+		{
+			double x0 = xData.at(i);
+			double x1 = xData.at(i+1);
+			double y0 = yData.at(i);
+			double y1 = yData.at(i+1);
+			vector< double > xSpline, ySpline;
+
+			for (double j = xData.at(i); j < xData.at(i+1); j += stepSpline)
+			{
+					//temp variables for interp
+					double m = (y1 - y0)/(x1 - x0);
+					double b = -m*x0 + y0;
+					double y = m * (j) + b; 
+					linearInterp[0].push_back(j);
+					linearInterp[1].push_back(y); 
+			}
+		} 
+	} 
+
+	return linearInterp;
+}
+
+//___________________________________________________________________________
+//Returns a vector of the average distances between two vectors of vectors
+vector<double> diff(vector <vector<double> > yInterp1, vector <vector<double> > yInterp2) 
+{
+	double sum = 0;
+	vector<double> differences;
+
+	for(int i = 0; i < (int)yInterp1.size(); i++) 
+	{
+		for(int j = 0; j < (int) yInterp1[0].size(); j++)
+		{
+			sum += abs(yInterp2[i][j] - yInterp1[i][j]);
+		}
+		differences.push_back(sum/(int) yInterp1[0].size());
+		sum = 0;
+	}
+
+	return differences;
 }
 
 //______________________________________________________________________________
@@ -234,6 +261,7 @@ void multipleSplinesWithHistogramsMerge(int iEventLook = 163, int nEvents = 1000
 
 	vector< vector<double> > xBSplineValues, yBSplineValues;
 	vector< vector<double> > xCSplineValues, yCSplineValues; 
+	vector< vector<double> > xLinearInterpValues, yLinearInterpValues; 
 
 //Setup for the C-spline_________________________________________________________________________
 	TMinuit *myMinuit = new TMinuit(npar);  //initialize TMinuit with a maximum of npar 
@@ -312,6 +340,11 @@ void multipleSplinesWithHistogramsMerge(int iEventLook = 163, int nEvents = 1000
 
 		xCSplineValues.push_back(cSplineValues.at(0));
 		yCSplineValues.push_back(cSplineValues.at(1));
+		
+	//Linear interpolation
+		vector <vector<double> > interpPoints = linearInterpolation(xData_GLOB, yData_GLOB, stepSpline);
+		xLinearInterpValues.push_back(interpPoints.at(0));
+		yLinearInterpValues.push_back(interpPoints.at(1));
 	}
 
 //Histograms______________________________________________________________________________________
@@ -344,14 +377,7 @@ void multipleSplinesWithHistogramsMerge(int iEventLook = 163, int nEvents = 1000
 			interpB.push_back( (yEvents[i][j]-yBSplineValues[i][indexForB])/yErrorEvents[i][j] );
 			interpC.push_back( (yEvents[i][j]-yCSplineValues[i][indexForC])/yErrorEvents[i][j] );
 		}
-	}	
-
-	//Test graphs for splines
-	TGraph *GCspline = new TGraph(xCSplineValues[iEventLook].size(), &xCSplineValues[iEventLook][0], &yCSplineValues[iEventLook][0]);
-	GCspline->SetLineColor(kRed);
-	TGraph *GBspline = new TGraph(xBSplineValues[iEventLook].size(), &xBSplineValues[iEventLook][0], &yBSplineValues[iEventLook][0]);
-	TGraph *Gdata = new TGraph(xEvents[0].size(), &xEvents[iEventLook][0], &yEvents[iEventLook][0]);
-	Gdata->SetMarkerStyle(20);
+	}
 
 	int nbinsI = 101;
 	double xlowI = -0.1;
@@ -364,6 +390,37 @@ void multipleSplinesWithHistogramsMerge(int iEventLook = 163, int nEvents = 1000
 	for (int i=0; i<(int)interpC.size(); i++) hInterpC->Fill(interpC.at(i));
 	hInterpC->SetLineColor(kGreen);
 	hInterpC->SetStats(0);	
+
+	//Differences
+	int nbinsd = 100;
+	double xlowd = 0;
+	double xupd = 25;
+
+	TH1D *hDiffB = new TH1D("Diff B","Differences; difference between spline and linear interpolation; Number of Events", nbinsd, xlowd, xupd); 
+	hDiffB->SetStats(0);
+	TH1D *hDiffC = new TH1D("Diff C","Differences; difference between spline and linear interpolation; Number of Events", nbinsd, xlowd, xupd); 
+	hDiffC->SetLineColor(kRed);
+	hDiffC->SetStats(0);
+
+	vector<double> diffB = diff(yBSplineValues, yLinearInterpValues);
+	vector<double> diffC = diff(yCSplineValues, yLinearInterpValues);	
+
+	for(int i=0; i<(int)diffB.size(); i++) 
+	{
+		hDiffB->Fill(diffB.at(i));
+		hDiffC->Fill(diffC.at(i));	
+	}
+
+//Test Graphs for splines_____________________________________________________________________
+
+	TGraph *GCspline = new TGraph(xCSplineValues[iEventLook].size(), &xCSplineValues[iEventLook][0], &yCSplineValues[iEventLook][0]);
+	GCspline->SetLineColor(kRed);
+	TGraph *GBspline = new TGraph(xBSplineValues[iEventLook].size(), &xBSplineValues[iEventLook][0], &yBSplineValues[iEventLook][0]);
+	TGraph *Gdata = new TGraph(xEvents[0].size(), &xEvents[iEventLook][0], &yEvents[iEventLook][0]);
+	Gdata->SetMarkerStyle(20);
+	TGraph *lin = new TGraph((int)xLinearInterpValues[iEventLook].size(), &xLinearInterpValues[iEventLook][0], &yLinearInterpValues[iEventLook][0]);
+	lin->SetLineColor(kBlue);
+	lin->SetMarkerStyle(2);
 
 //Draws______________________________________________________________________________________
 	//Interpolation 
@@ -396,11 +453,27 @@ void multipleSplinesWithHistogramsMerge(int iEventLook = 163, int nEvents = 1000
 	hTimeC->Draw("same");
 	legTime-> Draw();
 
-	TCanvas *c3 = new TCanvas("c3", "Test splines");
+	//Differences
+	TLegend *legDiff = new TLegend(0.9,0.70,0.75,0.85);
+	legDiff->SetLineColor(kWhite); 
+	legDiff->SetFillColor(kWhite);
+	legDiff->SetMargin(0.3); 
+	legDiff->AddEntry(hDiffB,"b-spline","l");
+	legDiff->AddEntry(hDiffC,"c-spline","l");
+	legDiff->SetTextSize(0.05);
+
+	TCanvas *c3 = new TCanvas("c3", "Differences");
 	c3->cd();
+	hDiffC->Draw("");
+	hDiffB->Draw("same");
+	legDiff-> Draw();
+
+	TCanvas *c4 = new TCanvas("c4", "Test splines");
+	c4->cd();
 	Gdata->Draw("ap");
 	GCspline->Draw("samel");
 	GBspline->Draw("samel");
+	lin->Draw("samel");
 
 	//Free the memory used
 	gsl_spline_free (spline_GLOB); 
