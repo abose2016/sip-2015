@@ -79,8 +79,6 @@ void bSplineGSLDemoV4 (int seed = 96489689, double stepSpline = 0.01)
 		std::cout<<xi<<" "<<yi<<" "<<yerr<<std::endl;
 	}
 
-	
-
 	//Free the memory used
 	gsl_vector_free(xControl);
 	gsl_vector_free(yControl);

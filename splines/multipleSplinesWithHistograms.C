@@ -265,7 +265,7 @@ vector< vector<double> > bSpline(int nControl, int npar, vector <double> xDataB,
 } 
 
 //_________________________________________________________________________________
-void integratedSplinesV4b(int iEventLook = 163 , int nEvents = 1000, int nPoints = 9, double seed = 231) 
+void multipleSplinesWithHistograms(int iEventLook = 163 , int nEvents = 1000, int nPoints = 9, double seed = 231) 
 {
 
 	//Load the data

@@ -1,0 +1,49 @@
+
+# DO NOT DELETE
+
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TCanvas.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TPad.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TVirtualPad.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TAttPad.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/Rtypes.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/RConfig.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/RVersion.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/DllImport.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/Rtypeinfo.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/snprintf.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/strlcpy.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TGenericClassInfo.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TSchemaHelper.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TVirtualX.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TNamed.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TObject.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TStorage.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TVersionCheck.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/Riosfwd.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TBuffer.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TString.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TMathBase.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TAttLine.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TAttFill.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TAttText.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TAttMarker.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/GuiTypes.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/Buttons.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TQObject.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TAttCanvas.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TCanvasImp.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TFrame.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TWbox.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TBox.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TColor.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TArrayI.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TArray.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TGraph.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TVectorFfwd.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TVectorDfwd.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TFitResultPtr.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TAxis.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TAttAxis.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/TArrayD.h
+./bSplineGSLOriginalDemo_C.so: /usr/include/root/cintdictversion.h /usr/include/root/RVersion.h
+bSplineGSLOriginalDemo_C__ROOTBUILDVERSION= 5.34/14

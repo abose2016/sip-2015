@@ -279,8 +279,6 @@ void multipleSplinesWithHistogramsVa(int iEventLook = 165 , int nEvents = 1000, 
 			gsl_vector_set(yControl, j, yEvents[i][j]);
 			gsl_vector_set(w, j, 1.0/(yErrorEvents[i][j]*yErrorEvents[i][j]));
 		}
-
-		//Declare variables for the fit and allocate their memory---- putting this in the main was what caused the error
 	
 		for (int n = 0; n < nPoints; ++n)
 		{

@@ -20,7 +20,7 @@
 using namespace std;
 
 //Data definition
-vector <double> xVector, yVector, yErrorVectorL, yErrorVectorH; //represents the original set of data to fit with a spline
+vector <double> xVector, yVector, yErrorVector; //represents the original set of data to fit with a spline
 gsl_interp_accel *acc;
 gsl_spline *spline;
 
@@ -31,17 +31,8 @@ double ComputeChi2(vector< double > ySplineVector)
 	double chisq = 0;
 	for (int i = 0; i < (int)yVector.size(); i++) 
 	{
-
-			if ( ySplineVector.at(i)> yVector.at(i))
-			{
-				double delta = (yVector.at(i) - ySplineVector.at(i) )/ yErrorVectorH.at(i);
-				chisq += delta*delta;
-			}
-			else 
-			{
-				double delta = (yVector.at(i) - ySplineVector.at(i) )/ yErrorVectorL.at(i);
-				chisq += delta*delta;
-			}
+		double delta = (yVector.at(i) - ySplineVector.at(i) )/ yErrorVector.at(i);
+		chisq += delta*delta;
 	}
 	return chisq; 
 }
@@ -60,37 +51,30 @@ void fcn(int &, double *, double &f, double *par, int )
 	f = ComputeChi2(ySpline); //calculate chi square - to be minimized by the TMinuit function
 }
 
-
-
-//______________________________________________________________________________
-// Fill y and error vectors with random points from TRandom#
-void FillRandVectors(int nPoints, vector<double> &xVector, vector< double > &yVector, vector< double > &yErrorVectorL, vector< double > &yErrorVectorH, int seed = 250, double lowerBound= 10, double upperBound= 20, double lowerErrorBound = 1, double upperErrorBound= 2)
+// Fill x,y and error vectors with random points from TRandom#
+void FillRandVectors(vector<double> &xVector, vector< double > &yVector, vector< double > &yErrorVector, int n, int seed = 250)
 {
 	//Call TRandom3
 	TRandom3 *jrand = new TRandom3(seed);
-	for (int i = 0; i < nPoints; i++)
+	for (int i = 0; i<n; i = i + 1)
 	{
-		xVector.push_back(i);
-		yVector.push_back(jrand->Uniform(lowerBound, upperBound));
-		yErrorVectorL.push_back(jrand->Uniform(lowerErrorBound, upperErrorBound));
-		yErrorVectorH.push_back(yErrorVectorL.at(i)*.5);
-
-		cout<<yVector[i]<<" "<<TMath::Sqrt(0.5*(yErrorVectorL[i]*yErrorVectorL[i]+yErrorVectorH[i]*yErrorVectorH[i]))<< endl;
+		xVector.push_back(jrand->Uniform(20.0));
+		yVector.push_back(jrand->Uniform(5.0, 20.0));
+		yErrorVector.push_back(jrand->Uniform(0.5, 5.0));
 	}
 	delete jrand;
 }
-//______________________________________________________________________________
-// Construct a graph from vectors and y error vector
-TGraphAsymmErrors *LoadGraphFromVectorsWithError(vector<double> xVector, vector<double> yVector, vector<double> yErrorVectorL, vector<double> yErrorVectorH, string xTitle, string yTitle)
+
+// Construct a graph from vectors and error vectors
+TGraphErrors *LoadGraphFromVectorsWithError(std::vector< double > xVector, std::vector< double > yVector, std::vector< double > yErrorVector, string xTitle, string yTitle)
 {
 	int n = xVector.size();
 
 	if ((xVector.size() == yVector.size()) &&
-		(yVector.size() == yErrorVectorL.size())&&
-		(yVector.size() == yErrorVectorH.size()))
+		(yVector.size() == yErrorVector.size()))
 	{
 		//Create a graph
-		TGraphAsymmErrors *gr = new TGraphAsymmErrors(n, &xVector[0], &yVector[0], 0, 0, &yErrorVectorL[0], &yErrorVectorH[0]);
+		TGraphErrors *gr = new TGraphErrors(n, &xVector[0], &yVector[0], 0, &yErrorVector[0]);
 		gr->SetTitle("");
 		gr->SetMarkerStyle(20);
 		gr->SetMarkerSize(1.2);
@@ -101,24 +85,22 @@ TGraphAsymmErrors *LoadGraphFromVectorsWithError(vector<double> xVector, vector<
 		gr->GetYaxis()->CenterTitle();
 		return gr;
 		delete gr;
-	}
-	else
+	} else
 	{
-		TGraphAsymmErrors *gr0 = new TGraphAsymmErrors();
+		TGraphErrors *gr0 = new TGraphErrors();
 		return gr0;
 		delete gr0;
 	}
 }
-
 //______________________________________________________________________________
 void tMinuitFit()
 {
 
 	clock_t tcstart = clock();
 	//Load the data
-	int nPoints = 9;
-	double seed = 99846895709;
-	FillRandVectors(nPoints, xVector, yVector, yErrorVectorL, yErrorVectorH, seed); //create random vectors for y values and y error vector
+	int nPoints = 5;
+	double seed = 250;
+	FillRandVectors(nPoints, xVector, yVector, yErrorVector, seed); //create random vectors for y values and y error vector
 
 	//Intialization of the global variables
 	acc = gsl_interp_accel_alloc ();
@@ -175,8 +157,6 @@ void tMinuitFit()
 		xSpline.push_back(xVector[0]+i*stepSpline);
 		ySpline.push_back(gsl_spline_eval (spline, xSpline.back(), acc));
 	}
-
-
 	
 	// Graph the spline
 	TGraph *grSpline = new TGraph(nPointsSpline, &xSpline[0], &ySpline[0]);
@@ -190,7 +170,7 @@ void tMinuitFit()
  	gsl_interp_accel_free (acc);
 
 	//Graph of the data
-	TGraphAsymmErrors *g1 = LoadGraphFromVectorsWithError(xVector, yVector, yErrorVectorL, yErrorVectorH, "X Axis (arbitrary units)", "Y Axis (arbitrary units)");
+	TGraphErrors *g1 = LoadGraphFromVectorsWithError(xVector, yVector, yErrorVector, "X Axis (arbitrary units)", "Y Axis (arbitrary units)");
 
 	//Draw
 	TCanvas *c1 = new TCanvas("c1", "interpolation", 0, 0, 1000, 800);

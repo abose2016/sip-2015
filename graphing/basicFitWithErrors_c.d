@@ -1,0 +1,61 @@
+
+# DO NOT DELETE
+
+./basicFitWithErrors_c.so: /usr/include/root/TCanvas.h
+./basicFitWithErrors_c.so: /usr/include/root/TPad.h
+./basicFitWithErrors_c.so: /usr/include/root/TVirtualPad.h
+./basicFitWithErrors_c.so: /usr/include/root/TAttPad.h
+./basicFitWithErrors_c.so: /usr/include/root/Rtypes.h
+./basicFitWithErrors_c.so: /usr/include/root/RConfig.h
+./basicFitWithErrors_c.so: /usr/include/root/RVersion.h
+./basicFitWithErrors_c.so: /usr/include/root/DllImport.h
+./basicFitWithErrors_c.so: /usr/include/root/Rtypeinfo.h
+./basicFitWithErrors_c.so: /usr/include/root/snprintf.h
+./basicFitWithErrors_c.so: /usr/include/root/strlcpy.h
+./basicFitWithErrors_c.so: /usr/include/root/TGenericClassInfo.h
+./basicFitWithErrors_c.so: /usr/include/root/TSchemaHelper.h
+./basicFitWithErrors_c.so: /usr/include/root/TVirtualX.h
+./basicFitWithErrors_c.so: /usr/include/root/TNamed.h
+./basicFitWithErrors_c.so: /usr/include/root/TObject.h
+./basicFitWithErrors_c.so: /usr/include/root/TStorage.h
+./basicFitWithErrors_c.so: /usr/include/root/TVersionCheck.h
+./basicFitWithErrors_c.so: /usr/include/root/Riosfwd.h
+./basicFitWithErrors_c.so: /usr/include/root/TBuffer.h
+./basicFitWithErrors_c.so: /usr/include/root/TString.h
+./basicFitWithErrors_c.so: /usr/include/root/TMathBase.h
+./basicFitWithErrors_c.so: /usr/include/root/TAttLine.h
+./basicFitWithErrors_c.so: /usr/include/root/TAttFill.h
+./basicFitWithErrors_c.so: /usr/include/root/TAttText.h
+./basicFitWithErrors_c.so: /usr/include/root/TAttMarker.h
+./basicFitWithErrors_c.so: /usr/include/root/GuiTypes.h
+./basicFitWithErrors_c.so: /usr/include/root/Buttons.h
+./basicFitWithErrors_c.so: /usr/include/root/TQObject.h
+./basicFitWithErrors_c.so: /usr/include/root/TAttCanvas.h
+./basicFitWithErrors_c.so: /usr/include/root/TCanvasImp.h
+./basicFitWithErrors_c.so: /usr/include/root/TGraphErrors.h
+./basicFitWithErrors_c.so: /usr/include/root/TGraph.h
+./basicFitWithErrors_c.so: /usr/include/root/TVectorFfwd.h
+./basicFitWithErrors_c.so: /usr/include/root/TVectorDfwd.h
+./basicFitWithErrors_c.so: /usr/include/root/TFitResultPtr.h
+./basicFitWithErrors_c.so: /usr/include/root/TRandom3.h
+./basicFitWithErrors_c.so: /usr/include/root/TRandom.h
+./basicFitWithErrors_c.so: /usr/include/root/TAxis.h
+./basicFitWithErrors_c.so: /usr/include/root/TAttAxis.h
+./basicFitWithErrors_c.so: /usr/include/root/TArrayD.h
+./basicFitWithErrors_c.so: /usr/include/root/TArray.h
+./basicFitWithErrors_c.so: /usr/include/root/TSystem.h
+./basicFitWithErrors_c.so: /usr/include/root/TInetAddress.h
+./basicFitWithErrors_c.so: /usr/include/root/TTimer.h
+./basicFitWithErrors_c.so: /usr/include/root/TSysEvtHandler.h
+./basicFitWithErrors_c.so: /usr/include/root/TTime.h /usr/include/root/TF1.h
+./basicFitWithErrors_c.so: /usr/include/root/TFormula.h
+./basicFitWithErrors_c.so: /usr/include/root/TBits.h
+./basicFitWithErrors_c.so: /usr/include/root/TObjArray.h
+./basicFitWithErrors_c.so: /usr/include/root/TSeqCollection.h
+./basicFitWithErrors_c.so: /usr/include/root/TCollection.h
+./basicFitWithErrors_c.so: /usr/include/root/TIterator.h
+./basicFitWithErrors_c.so: /usr/include/root/Math/ParamFunctor.h
+./basicFitWithErrors_c.so: /usr/include/root/TStyle.h
+./basicFitWithErrors_c.so: /usr/include/root/TArrayI.h
+./basicFitWithErrors_c.so: /usr/include/root/cintdictversion.h /usr/include/root/RVersion.h
+basicFitWithErrors_c__ROOTBUILDVERSION= 5.34/14

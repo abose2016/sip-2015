@@ -33,7 +33,7 @@ double ComputeChi2(vector< double > chiVector)
 	double chisq = 0;
 	for (int i = 0; i < (int)yVector.size(); i++) 
 	{
-		double delta = (yVector.at(i) - chiVector.at(i) )/ yErrorVector.at(i);
+		double delta = (yVector.at(i) - chiVector.at(i))/ yErrorVector.at(i);
 		chisq += delta*delta;
 	}
 	return chisq;
@@ -42,19 +42,19 @@ double ComputeChi2(vector< double > chiVector)
 //______________________________________________________________________________
 void fcn(int &npar, double *gin, double &f, double *par, int iflag)
 {
-	vector< double > vpar;
+	vector< double > vpar; //y values of the control points that the spline is using (spline's control points are different than the actual data but TMinuit should 										minimize them so they are the same = interpolation)
 	for(int i = 0; i < nControl; i++)
 	{
-		vpar.push_back(par[i]); //used to store the values of the par array
+		vpar.push_back(par[i]); 
 	}
 
-   gsl_spline_init (spline, &xVector[0], &vpar[0], nControl); //initialize the spline
+   gsl_spline_init (spline, &xVector[0], &yVector[0], nControl); //initialize the spline
 	int nSpline = int ((xVector[nControl-1]-xVector[0])/stepSpline); //nSpline represents the number of points of the spline
    
 	for (int i= 0; i < nSpline; i++) //evaluate the spline
    {
       xSpline.push_back(xVector[0]+i*stepSpline); 
-      ySpline.push_back(gsl_spline_eval (spline, xSpline[i], acc));
+      ySpline.push_back(gsl_spline_eval(spline, xSpline[i], acc));
    }
     
 	f = ComputeChi2(vpar); //calculate chi square - to be minimized by the TMinuit function
@@ -73,7 +73,7 @@ void FillRandVectors(vector<double> &xVector, vector< double > &yVector, vector<
 	TRandom3 *jrand = new TRandom3(seed);
 	for (int i = 0; i < n; i++)
 	{
-		xVector.push_back(i);
+		xVector.push_back(i+1);
 		yVector.push_back(jrand->Uniform(lowerBound, upperBound));
 		yErrorVector.push_back(jrand->Uniform(lowerErrorBound, upperErrorBound));
 	}
@@ -115,6 +115,9 @@ void tMinuitFit()
 	double seed = 59050830;
 	FillRandVectors(xVector, yVector, yErrorVector, nControl, seed); //create random vectors for y values and y error vector
 	int nSpline = int ((xVector[nControl-1]-xVector[0])/stepSpline); //calculate the number of points of the spline
+
+	for(int i = 0; i < (int)xVector.size(); i++)
+		cout << xVector.at(i) <<"		" << yVector.at(i) << endl;
 
 	int npar = nControl;
 	vector<double> vstart, vstep;

@@ -314,6 +314,8 @@ void multipleSplinesWithHistogramsVb(int iEventLook = 163, int nEvents = 1000, i
 		tbstop = clock();
 		timeb.push_back(((float)tbstop-(float)tbstart)/ (CLOCKS_PER_SEC/1000.) );		
 
+		std::cout<<timeb.back()<<std::endl;
+
 		xBSplineValues.push_back(bSplineValues.at(0));
 		yBSplineValues.push_back(bSplineValues.at(1));
 
@@ -335,8 +337,10 @@ void multipleSplinesWithHistogramsVb(int iEventLook = 163, int nEvents = 1000, i
 
 	TH1D *hTimeB = new TH1D("Time","Timing; time [ms]; Number of Events", nbins, xlow, xup); 
 	hTimeB->SetStats(0);
+	hTimeB->SetMarkerStyle(10);
 	TH1D *hTimeC = new TH1D("TimeC","Timing; time [ms]; Number of Events", nbins, xlow, xup); 
 	hTimeC->SetLineColor(kRed);
+	hTimeC->SetMarkerStyle(10);
 	hTimeC->SetStats(0);
 
 	for(int i=0; i<(int)timec.size(); i++) 
@@ -406,8 +410,8 @@ void multipleSplinesWithHistogramsVb(int iEventLook = 163, int nEvents = 1000, i
 
 	TCanvas *c2 = new TCanvas("c2", "Computation time");
 	c2->cd();
-	hTimeB->Draw("");
-	hTimeC->Draw("same");
+	hTimeB->Draw();
+//	hTimeC->Draw("same");
 	legTime-> Draw();
 
 	TCanvas *c3 = new TCanvas("c3", "Test splines");

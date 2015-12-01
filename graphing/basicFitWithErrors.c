@@ -89,12 +89,12 @@ TGraph *LoadGraphFromVectors(std::vector< double > xVector, std::vector< double 
 void basicFitWithErrors() {
 
 	// Declaring variables
-	const int n = 7;
+	const int n = 5;
 	vector<string> polynomials;
 	vector<double> xVector, yVector, xErrorVector, yErrorVector, newPlotY, newPlotX, tempX, tempY;
 	
 	// Loading variables
-	FillRandVectors(xVector, yVector, xErrorVector, yErrorVector, n, 807340);
+	FillRandVectors(xVector, yVector, xErrorVector, yErrorVector, n, 250);
 	polynomials.push_back("pol0");
 	polynomials.push_back("pol1");
 	polynomials.push_back("pol2");

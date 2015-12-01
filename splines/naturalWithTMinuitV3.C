@@ -102,8 +102,8 @@ TGraphErrors *LoadGraphFromVectorsWithError(vector<double> xVector, vector<doubl
 void tMinuitFit()
 {
 	//Load the data
-	int nPoints = 5;
-	double seed = 59050830;
+	int nPoints = 8;
+	double seed = 250;
 	FillRandVectors(nPoints, xVector, yVector, yErrorVector, seed); //create random vectors for y values and y error vector
 
 	//Intialization of the global variables
@@ -161,15 +161,20 @@ void tMinuitFit()
 
 	TGraph *grSpline = new TGraph(nPointsSpline, &xSpline[0], &ySpline[0]);
 	grSpline->SetTitle("");
-	grSpline->GetXaxis()->SetTitle("X-axis  [A.U.]");
-	grSpline->GetYaxis()->SetTitle("Y-axis  [A.U.]");
+	grSpline->GetXaxis()->SetTitle("Control Points");
+	grSpline->GetYaxis()->SetTitle("Arbitrary Values");
 
 	//Free the memory for the spline
 	gsl_spline_free (spline); //frees the memory used by the spline
  	gsl_interp_accel_free (acc);
 
 	//Graph of the data
-	TGraphErrors *g1 = LoadGraphFromVectorsWithError(xVector, yVector, yErrorVector, "X Axis (arbitrary units)", "Y Axis (arbitrary units)");
+	TGraph *g1 = new TGraph(xVector.size(), &xVector[0], &yVector[0]);
+	g1->SetMarkerStyle(20);
+	g1->SetTitle("");
+	g1->GetXaxis()->SetTitle("Control Points");
+	g1->GetXaxis()->SetLimits(0, 7);
+	g1->GetYaxis()->SetTitle("Arbitrary Values");
 
 	//Draw
 	TCanvas *c1 = new TCanvas("c1", "interpolation", 0, 0, 1000, 800);

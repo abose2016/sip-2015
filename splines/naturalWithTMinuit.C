@@ -28,6 +28,7 @@ using namespace std;
 //Global variables
 int nControl = 15;
 vector<double> xControlCubic, yControlCubic;
+vector<double> xVector, yVector;
 
 gsl_interp_accel *acc = gsl_interp_accel_alloc ();
 gsl_spline *spline = gsl_spline_alloc (gsl_interp_cspline, nControl);	
@@ -46,7 +47,6 @@ double ComputeChi2(vector< double > vpar)
 
 //______________________________________________________________________________
 void fcn(int &npar, double *gin, double &f, double *par, int iflag, int seed = 250, double lowerBound= 5, double upperBound= 20, double lowerErrorBound = .5, double upperErrorBound= 5)
-
 {
 	//Populate data
 	TRandom3 *jrand = new TRandom3(seed);
